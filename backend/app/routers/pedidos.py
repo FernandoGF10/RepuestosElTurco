@@ -112,3 +112,16 @@ def cambiar_estado(
     p.estado = data.estado
     db.commit()
     return PedidoOut.from_orm_pedido(_load(db, pedido_id))
+
+
+@router.delete("/{pedido_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_pedido(
+    pedido_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: Usuario = Depends(get_current_user),
+):
+    p = db.query(Pedido).filter(Pedido.id == pedido_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+    db.delete(p)
+    db.commit()
