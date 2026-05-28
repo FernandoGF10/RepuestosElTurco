@@ -1,4 +1,4 @@
-import { X, Car, Info, Shield, MessageCircle, ShoppingCart } from "lucide-react";
+import { X, Car, Info, Shield, ShoppingCart } from "lucide-react";
 import type { ProductoAdmin } from "@/types/admin";
 
 interface ProductDetailModalProps {
@@ -109,26 +109,15 @@ const ProductDetailModal = ({ producto, onClose, onAgregarCarrito }: ProductDeta
             </div>
           </div>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={() => onAgregarCarrito(producto)}
-              disabled={!enStock}
-              className="flex-1 flex items-center justify-center gap-2 bg-secondary text-secondary-foreground font-heading font-bold text-sm py-3.5 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ShoppingCart className="w-4 h-4" />
-              Agregar al carrito
-            </button>
-            <a
-              href={`https://wa.me/56977424442?text=Hola, me interesa el repuesto ${producto.codigo} - ${producto.nombre} (${producto.marca}) y quiero retiro en tienda`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 bg-whatsapp text-primary-foreground font-heading font-bold text-sm py-3.5 rounded-xl hover:brightness-110 transition-all"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Consultar por WhatsApp
-            </a>
-          </div>
+          {/* CTA */}
+          <button
+            onClick={() => { onAgregarCarrito(producto); onClose(); }}
+            disabled={!enStock}
+            className="w-full flex items-center justify-center gap-2 bg-secondary text-secondary-foreground font-heading font-bold text-sm py-3.5 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            {enStock ? "Agregar al carrito" : "Sin stock disponible"}
+          </button>
         </div>
       </div>
     </div>

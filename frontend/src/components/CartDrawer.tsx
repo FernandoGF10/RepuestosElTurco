@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Minus, Plus, ShoppingBag, Trash2, X, User, Phone, ChevronLeft, Loader2 } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, X, User, Phone, ChevronLeft, Loader2, CheckCircle2, Package } from "lucide-react";
 import { toast } from "sonner";
 import type { ProductoAdmin } from "@/types/admin";
 import { api } from "@/lib/api";
@@ -33,10 +33,11 @@ const CartDrawer = ({
   onClear,
   onOrderSuccess,
 }: CartDrawerProps) => {
-  const [step, setStep] = useState<"cart" | "checkout">("cart");
+  const [step, setStep] = useState<"cart" | "checkout" | "success">("cart");
   const [cliente, setCliente] = useState<ClienteForm>({ nombre: "", telefono: "", email: "" });
   const [errors, setErrors] = useState<Partial<ClienteForm>>({});
   const [loading, setLoading] = useState(false);
+  const [numeroPedido, setNumeroPedido] = useState("");
 
   if (!open) return null;
 
@@ -53,6 +54,7 @@ const CartDrawer = ({
     setStep("cart");
     setCliente({ nombre: "", telefono: "", email: "" });
     setErrors({});
+    setNumeroPedido("");
     onClose();
   };
 
@@ -85,22 +87,9 @@ const CartDrawer = ({
         })),
       });
 
-      const mensaje = encodeURIComponent(
-        [
-          `Hola, acabo de realizar el pedido *${pedido.numero}* y quiero retirarlo en tienda:`,
-          ...items.map((item) => `- ${item.producto.nombre} (${item.producto.codigo}) x${item.cantidad}`),
-          `Total: ${totalFormatted}`,
-          `Nombre: ${cliente.nombre.trim()}`,
-          `Teléfono: ${cliente.telefono.trim()}`,
-        ].join("\n"),
-      );
-
-      const whatsapp = api.token.getUsername ? "" : "";
-      window.open(`https://wa.me/56977424442?text=${mensaje}`, "_blank");
-
-      toast.success(`Pedido ${pedido.numero} registrado con éxito.`);
+      setNumeroPedido(pedido.numero);
+      setStep("success");
       onOrderSuccess();
-      handleClose();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al registrar el pedido.");
     } finally {
@@ -127,9 +116,11 @@ const CartDrawer = ({
             )}
             <div>
               <p className="font-heading font-black text-lg text-foreground">
-                {step === "cart" ? "Carrito de compras" : "Datos de retiro"}
+                {step === "cart" ? "Carrito de compras" : step === "checkout" ? "Datos del comprador" : "¡Pedido confirmado!"}
               </p>
-              <p className="text-sm text-muted-foreground">Retiro exclusivo en tienda</p>
+              {step !== "success" && (
+                <p className="text-sm text-muted-foreground">Retiro exclusivo en tienda</p>
+              )}
             </div>
           </div>
           <button onClick={handleClose} className="p-2 rounded-full hover:bg-muted transition-colors">
@@ -147,6 +138,32 @@ const CartDrawer = ({
             <p className="text-sm text-muted-foreground max-w-xs">
               Agrega repuestos y finaliza tu pedido online para retirarlo directamente en la tienda.
             </p>
+          </div>
+        ) : step === "success" ? (
+          /* Success screen */
+          <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-5">
+            <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-heading font-black text-xl text-foreground">¡Pedido registrado!</h3>
+              <div className="inline-flex items-center gap-2 bg-muted rounded-lg px-4 py-2">
+                <Package className="w-4 h-4 text-primary" />
+                <span className="font-mono font-bold text-lg text-primary">{numeroPedido}</span>
+              </div>
+              <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+                Tu pedido fue recibido y está siendo procesado. Puedes pasar a retirarlo cuando esté listo.
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground bg-muted/60 rounded-xl px-4 py-3 max-w-xs">
+              Guarda el número de pedido para hacer seguimiento. El equipo de la tienda lo preparará a la brevedad.
+            </p>
+            <button
+              onClick={handleClose}
+              className="w-full bg-primary text-primary-foreground font-heading font-bold text-sm py-3 rounded-xl hover:brightness-110 transition-all"
+            >
+              Seguir comprando
+            </button>
           </div>
         ) : step === "cart" ? (
           <>
@@ -308,9 +325,9 @@ const CartDrawer = ({
                 className="w-full flex items-center justify-center gap-2 bg-secondary text-secondary-foreground font-heading font-bold text-sm py-3.5 rounded-xl hover:brightness-110 transition-all disabled:opacity-60"
               >
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Registrando pedido...</>
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Procesando pedido...</>
                 ) : (
-                  "Registrar pedido y abrir WhatsApp"
+                  "Confirmar compra"
                 )}
               </button>
             </div>
