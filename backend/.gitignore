@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Entorno virtual
+venv/
+.env/
+
+# Variables de entorno
+.env
+*.env
+
+# IDE
+.idea/
+.vscode/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Base de datos local
+*.sqlite3
+
+# Archivos temporales
+*.tmp
+
+# Pytest
+.pytest_cache/
+
+# FastAPI / uvicorn
+*.pid
+
+# Node (si tu frontend usa Vite/React)
+frontend/node_modules/
+frontend/dist/
+
+# Build
+dist/
+build/

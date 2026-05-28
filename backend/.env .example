@@ -1,0 +1,14 @@
+# Base de datos PostgreSQL
+DATABASE_URL=postgresql://usuario:password@localhost:5433/repuestos_el_turco
+
+# JWT
+SECRET_KEY=tu_secret_key_super_segura
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=480
+
+# Admin por defecto
+ADMIN_USER=admin
+ADMIN_PASS=password_admin
+
+# CORS
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
