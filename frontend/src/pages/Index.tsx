@@ -10,66 +10,21 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import SiteFooter from "@/components/SiteFooter";
 import { categorias } from "@/data/repuestos";
 import { api } from "@/lib/api";
+import { useCart } from "@/lib/cartContext";
 import type { ProductoAdmin } from "@/types/admin";
 
-export type CartItem = { producto: ProductoAdmin; cantidad: number };
-
 const Index = () => {
+  const { addItem, setCartOpen, count } = useCart();
   const [productos, setProductos] = useState<ProductoAdmin[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("Todos");
   const [selectedProducto, setSelectedProducto] = useState<ProductoAdmin | null>(null);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
     api.productos.list({ solo_activos: true }).then(setProductos).catch(() => {
       toast.error("No se pudieron cargar los productos.");
     });
   }, []);
-
-  const cartCount = useMemo(() => cartItems.reduce((acc, item) => acc + item.cantidad, 0), [cartItems]);
-
-  const agregarAlCarrito = (producto: ProductoAdmin) => {
-    if (producto.stock === 0) {
-      toast.error("Este repuesto no tiene stock disponible.");
-      return;
-    }
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.producto.id === producto.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.producto.id === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item,
-        );
-      }
-      return [...prev, { producto, cantidad: 1 }];
-    });
-    setCartOpen(true);
-    toast.success(`${producto.nombre} agregado al carrito.`);
-  };
-
-  const aumentarCantidad = (id: string) => {
-    setCartItems((prev) =>
-      prev.map((item) => item.producto.id === id ? { ...item, cantidad: item.cantidad + 1 } : item),
-    );
-  };
-
-  const disminuirCantidad = (id: string) => {
-    setCartItems((prev) =>
-      prev
-        .map((item) => item.producto.id === id ? { ...item, cantidad: item.cantidad - 1 } : item)
-        .filter((item) => item.cantidad > 0),
-    );
-  };
-
-  const quitarDelCarrito = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.producto.id !== id));
-  };
-
-  const vaciarCarrito = () => {
-    setCartItems([]);
-    toast.success("Carrito vaciado.");
-  };
 
   const filteredProductos = useMemo(() => {
     return productos.filter((r) => {
@@ -91,7 +46,7 @@ const Index = () => {
       <SiteHeader
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        cartCount={cartCount}
+        cartCount={count}
         onOpenCart={() => setCartOpen(true)}
       />
       <HeroBanner />
@@ -137,7 +92,7 @@ const Index = () => {
                   key={r.id}
                   producto={r}
                   onVerMas={setSelectedProducto}
-                  onAgregarCarrito={agregarAlCarrito}
+                  onAgregarCarrito={addItem}
                 />
               ))}
             </div>
@@ -161,23 +116,13 @@ const Index = () => {
 
       <SiteFooter />
       <WhatsAppButton />
-
-      <CartDrawer
-        open={cartOpen}
-        items={cartItems}
-        onClose={() => setCartOpen(false)}
-        onIncrease={aumentarCantidad}
-        onDecrease={disminuirCantidad}
-        onRemove={quitarDelCarrito}
-        onClear={vaciarCarrito}
-        onOrderSuccess={vaciarCarrito}
-      />
+      <CartDrawer />
 
       {selectedProducto && (
         <ProductDetailModal
           producto={selectedProducto}
           onClose={() => setSelectedProducto(null)}
-          onAgregarCarrito={agregarAlCarrito}
+          onAgregarCarrito={addItem}
         />
       )}
     </div>

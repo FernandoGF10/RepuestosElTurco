@@ -51,11 +51,13 @@ const SiteFooter = () => {
               Tu tienda de confianza en repuestos automotrices. Compra online con atención personalizada y retiro directo en tienda.
             </p>
             <div className="flex gap-2">
-              <a href="https://www.facebook.com/Turcorepuestos/?locale=es_ES&_rdr" className="bg-card/10 hover:bg-card/20 p-2 rounded-lg transition-colors">
-                <Facebook className="w-4 h-4 text-card/70" />
+              <a href="https://www.facebook.com/Turcorepuestos/?locale=es_ES&_rdr" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#1877F2]/20 hover:bg-[#1877F2]/40 border border-[#1877F2]/30 hover:border-[#1877F2]/60 px-3 py-2 rounded-lg transition-all">
+                <Facebook className="w-4 h-4 text-[#1877F2]" />
+                <span className="text-xs font-heading font-bold text-card/80">Facebook</span>
               </a>
-              <a href="https://www.instagram.com/repuestos.elturco/" className="bg-card/10 hover:bg-card/20 p-2 rounded-lg transition-colors">
-                <Instagram className="w-4 h-4 text-card/70" />
+              <a href="https://www.instagram.com/repuestos.elturco/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#E1306C]/20 hover:bg-[#E1306C]/40 border border-[#E1306C]/30 hover:border-[#E1306C]/60 px-3 py-2 rounded-lg transition-all">
+                <Instagram className="w-4 h-4 text-[#E1306C]" />
+                <span className="text-xs font-heading font-bold text-card/80">Instagram</span>
               </a>
             </div>
           </div>

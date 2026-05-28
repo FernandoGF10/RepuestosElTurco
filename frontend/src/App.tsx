@@ -3,7 +3,10 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CartProvider } from "@/lib/cartContext";
 import Index from "./pages/Index.tsx";
+import Checkout from "./pages/Checkout.tsx";
+import PedidoConfirmado from "./pages/PedidoConfirmado.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import AdminLayout from "@/admin/AdminLayout";
 import RequireAuth from "@/admin/RequireAuth";
@@ -23,27 +26,31 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/admin/login" element={<Login />} />
-          <Route
-            path="/admin"
-            element={
-              <RequireAuth>
-                <AdminLayout />
-              </RequireAuth>
-            }
-          >
-            <Route index element={<Dashboard />} />
-            <Route path="productos" element={<Productos />} />
-            <Route path="pedidos" element={<Pedidos />} />
-            <Route path="clientes" element={<Clientes />} />
-            <Route path="reportes" element={<Reportes />} />
-            <Route path="configuracion" element={<Configuracion />} />
-          </Route>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <CartProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/pedido/:numero" element={<PedidoConfirmado />} />
+            <Route path="/admin/login" element={<Login />} />
+            <Route
+              path="/admin"
+              element={
+                <RequireAuth>
+                  <AdminLayout />
+                </RequireAuth>
+              }
+            >
+              <Route index element={<Dashboard />} />
+              <Route path="productos" element={<Productos />} />
+              <Route path="pedidos" element={<Pedidos />} />
+              <Route path="clientes" element={<Clientes />} />
+              <Route path="reportes" element={<Reportes />} />
+              <Route path="configuracion" element={<Configuracion />} />
+            </Route>
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </CartProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
