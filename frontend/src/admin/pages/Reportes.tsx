@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, TrendingUp, ShoppingBag, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import StatCard from "@/admin/components/StatCard";
-import { getPedidos, useAdminStore } from "@/lib/adminStore";
+import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 const formatCLP = (n: number) =>
@@ -10,8 +10,23 @@ const formatCLP = (n: number) =>
 
 const toDateInput = (d: Date) => d.toISOString().slice(0, 10);
 
+interface ReporteData {
+  total_ventas: number;
+  cant_pedidos: number;
+  ticket_promedio: number;
+  total_unidades: number;
+  top_productos: { producto_id: string; codigo: string; nombre: string; cantidad: number; total: number }[];
+}
+
+const empty: ReporteData = {
+  total_ventas: 0,
+  cant_pedidos: 0,
+  ticket_promedio: 0,
+  total_unidades: 0,
+  top_productos: [],
+};
+
 const Reportes = () => {
-  const pedidos = useAdminStore(getPedidos);
   const { toast } = useToast();
 
   const today = new Date();
@@ -20,68 +35,34 @@ const Reportes = () => {
 
   const [desde, setDesde] = useState(toDateInput(monthAgo));
   const [hasta, setHasta] = useState(toDateInput(today));
+  const [data, setData] = useState<ReporteData>(empty);
 
-  const filtrados = useMemo(() => {
-    const d = new Date(desde + "T00:00:00");
-    const h = new Date(hasta + "T23:59:59");
-    return pedidos.filter((p) => {
-      const f = new Date(p.fecha);
-      return f >= d && f <= h && p.estado !== "cancelado";
-    });
-  }, [pedidos, desde, hasta]);
+  useEffect(() => {
+    api.reportes.get(desde, hasta).then(setData).catch(() => setData(empty));
+  }, [desde, hasta]);
 
-  const totalVentas = filtrados.reduce((s, p) => s + p.total, 0);
-  const cantPedidos = filtrados.length;
-  const ticketProm = cantPedidos ? totalVentas / cantPedidos : 0;
-  const totalUnidades = filtrados.reduce(
-    (s, p) => s + p.items.reduce((ss, i) => ss + i.cantidad, 0),
-    0,
-  );
-
-  const topProductos = useMemo(() => {
-    const map = new Map<string, { nombre: string; codigo: string; cant: number; total: number }>();
-    for (const p of filtrados) {
-      for (const it of p.items) {
-        const ex = map.get(it.productoId);
-        if (ex) {
-          ex.cant += it.cantidad;
-          ex.total += it.precio * it.cantidad;
-        } else {
-          map.set(it.productoId, {
-            nombre: it.nombre,
-            codigo: it.codigo,
-            cant: it.cantidad,
-            total: it.precio * it.cantidad,
-          });
-        }
-      }
+  const exportCSV = async () => {
+    try {
+      const reporte = await api.reportes.get(desde, hasta);
+      const rows = [
+        ["Codigo", "Nombre", "Unidades", "Total"],
+        ...reporte.top_productos.map((p) => [p.codigo, p.nombre, p.cantidad.toString(), p.total.toString()]),
+      ];
+      const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reporte-ventas_${desde}_${hasta}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "Reporte exportado", description: `Top productos en CSV.` });
+    } catch {
+      toast({ title: "Error al exportar", variant: "destructive" });
     }
-    return Array.from(map.values()).sort((a, b) => b.cant - a.cant).slice(0, 10);
-  }, [filtrados]);
-
-  const exportCSV = () => {
-    const rows = [
-      ["Numero", "Fecha", "Cliente", "Telefono", "Items", "Total", "Estado"],
-      ...filtrados.map((p) => [
-        p.numero,
-        new Date(p.fecha).toISOString(),
-        p.cliente.nombre,
-        p.cliente.telefono,
-        p.items.reduce((s, i) => s + i.cantidad, 0).toString(),
-        p.total.toString(),
-        p.estado,
-      ]),
-    ];
-    const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `reporte-ventas_${desde}_${hasta}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: "Reporte exportado", description: `${filtrados.length} pedidos en CSV.` });
   };
+
+  const top = data.top_productos;
 
   return (
     <div className="space-y-6">
@@ -118,21 +99,21 @@ const Reportes = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Ventas totales" value={formatCLP(totalVentas)} icon={TrendingUp} tone="success" />
-        <StatCard label="Pedidos" value={cantPedidos} icon={ShoppingBag} tone="primary" />
-        <StatCard label="Ticket promedio" value={formatCLP(Math.round(ticketProm))} icon={TrendingUp} tone="secondary" />
-        <StatCard label="Unidades vendidas" value={totalUnidades} icon={Package} tone="warning" />
+        <StatCard label="Ventas totales" value={formatCLP(data.total_ventas)} icon={TrendingUp} tone="success" />
+        <StatCard label="Pedidos" value={data.cant_pedidos} icon={ShoppingBag} tone="primary" />
+        <StatCard label="Ticket promedio" value={formatCLP(data.ticket_promedio)} icon={TrendingUp} tone="secondary" />
+        <StatCard label="Unidades vendidas" value={data.total_unidades} icon={Package} tone="warning" />
       </div>
 
       <div className="bg-card border border-border rounded-lg p-5">
         <h3 className="font-heading font-bold text-foreground mb-4">Top productos vendidos</h3>
-        {topProductos.length === 0 ? (
+        {top.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">Sin ventas en el período seleccionado.</p>
         ) : (
           <ul className="space-y-2">
-            {topProductos.map((p, i) => {
-              const max = topProductos[0].cant;
-              const pct = (p.cant / max) * 100;
+            {top.map((p, i) => {
+              const max = top[0].cantidad;
+              const pct = (p.cantidad / max) * 100;
               return (
                 <li key={p.codigo} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
@@ -141,7 +122,7 @@ const Reportes = () => {
                       {p.nombre}
                     </span>
                     <span className="font-heading font-bold">
-                      {p.cant} u. · {formatCLP(p.total)}
+                      {p.cantidad} u. · {formatCLP(p.total)}
                     </span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">

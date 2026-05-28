@@ -1,18 +1,20 @@
 import { X, Car, Info, Shield, MessageCircle, ShoppingCart } from "lucide-react";
-import type { Repuesto } from "@/data/repuestos";
+import type { ProductoAdmin } from "@/types/admin";
 
 interface ProductDetailModalProps {
-  repuesto: Repuesto;
+  producto: ProductoAdmin;
   onClose: () => void;
-  onAgregarCarrito: (repuesto: Repuesto) => void;
+  onAgregarCarrito: (producto: ProductoAdmin) => void;
 }
 
-const ProductDetailModal = ({ repuesto, onClose, onAgregarCarrito }: ProductDetailModalProps) => {
-  const formattedPrice = repuesto.precio.toLocaleString("es-CL", {
+const ProductDetailModal = ({ producto, onClose, onAgregarCarrito }: ProductDetailModalProps) => {
+  const formattedPrice = producto.precio.toLocaleString("es-CL", {
     style: "currency",
     currency: "CLP",
     minimumFractionDigits: 0,
   });
+
+  const enStock = producto.stock > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -28,13 +30,13 @@ const ProductDetailModal = ({ repuesto, onClose, onAgregarCarrito }: ProductDeta
 
         {/* Image section */}
         <div className="relative h-64 md:h-72 bg-gradient-to-b from-muted to-card flex items-center justify-center rounded-t-2xl">
-          <img src={repuesto.imagen} alt={repuesto.nombre} className="h-48 w-48 object-contain" />
+          <img src={producto.imagen} alt={producto.nombre} className="h-48 w-48 object-contain" />
           <div className="absolute bottom-4 left-4 flex gap-2">
             <span className="bg-foreground/90 text-card text-xs font-mono font-bold px-3 py-1.5 rounded-md">
-              {repuesto.codigo}
+              {producto.codigo}
             </span>
             <span className="bg-primary text-primary-foreground text-xs font-heading font-bold px-3 py-1.5 rounded-md uppercase">
-              {repuesto.marca}
+              {producto.marca}
             </span>
           </div>
         </div>
@@ -43,10 +45,10 @@ const ProductDetailModal = ({ repuesto, onClose, onAgregarCarrito }: ProductDeta
           {/* Header */}
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground font-heading font-bold uppercase tracking-[0.15em]">
-              {repuesto.categoria}
+              {producto.categoria}
             </span>
-            <h2 className="font-heading font-black text-2xl text-foreground">{repuesto.nombre}</h2>
-            <p className="text-sm text-muted-foreground">Marca: <strong className="text-foreground">{repuesto.marca}</strong></p>
+            <h2 className="font-heading font-black text-2xl text-foreground">{producto.nombre}</h2>
+            <p className="text-sm text-muted-foreground">Marca: <strong className="text-foreground">{producto.marca}</strong></p>
           </div>
 
           {/* Price + stock row */}
@@ -57,13 +59,11 @@ const ProductDetailModal = ({ repuesto, onClose, onAgregarCarrito }: ProductDeta
             </div>
             <span
               className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${
-                repuesto.enStock
-                  ? "bg-whatsapp/15 text-whatsapp"
-                  : "bg-destructive/15 text-destructive"
+                enStock ? "bg-whatsapp/15 text-whatsapp" : "bg-destructive/15 text-destructive"
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${repuesto.enStock ? "bg-whatsapp" : "bg-destructive"}`} />
-              {repuesto.enStock ? "En Stock" : "Sin Stock"}
+              <span className={`w-2 h-2 rounded-full ${enStock ? "bg-whatsapp" : "bg-destructive"}`} />
+              {enStock ? "En Stock" : "Sin Stock"}
             </span>
           </div>
 
@@ -72,7 +72,7 @@ const ProductDetailModal = ({ repuesto, onClose, onAgregarCarrito }: ProductDeta
             <h3 className="flex items-center gap-2 font-heading font-bold text-sm text-foreground">
               <Info className="w-4 h-4 text-primary" /> Descripción detallada
             </h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{repuesto.detalle}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{producto.detalle}</p>
           </div>
 
           {/* Compatibility table */}
@@ -89,7 +89,7 @@ const ProductDetailModal = ({ repuesto, onClose, onAgregarCarrito }: ProductDeta
                   </tr>
                 </thead>
                 <tbody>
-                  {repuesto.compatibilidad.map((comp) => (
+                  {producto.compatibilidad.map((comp) => (
                     <tr key={comp.auto} className="border-t border-border">
                       <td className="px-4 py-2.5 text-foreground font-medium">{comp.auto}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">{comp.anios}</td>
@@ -112,15 +112,15 @@ const ProductDetailModal = ({ repuesto, onClose, onAgregarCarrito }: ProductDeta
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => onAgregarCarrito(repuesto)}
-              disabled={!repuesto.enStock}
+              onClick={() => onAgregarCarrito(producto)}
+              disabled={!enStock}
               className="flex-1 flex items-center justify-center gap-2 bg-secondary text-secondary-foreground font-heading font-bold text-sm py-3.5 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ShoppingCart className="w-4 h-4" />
               Agregar al carrito
             </button>
             <a
-              href={`https://wa.me/56977424442?text=Hola, me interesa el repuesto ${repuesto.codigo} - ${repuesto.nombre} (${repuesto.marca}) y quiero retiro en tienda`}
+              href={`https://wa.me/56977424442?text=Hola, me interesa el repuesto ${producto.codigo} - ${producto.nombre} (${producto.marca}) y quiero retiro en tienda`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 flex items-center justify-center gap-2 bg-whatsapp text-primary-foreground font-heading font-bold text-sm py-3.5 rounded-xl hover:brightness-110 transition-all"

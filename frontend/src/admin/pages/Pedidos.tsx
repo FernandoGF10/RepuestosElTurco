@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { getPedidos, updatePedidoEstado, useAdminStore } from "@/lib/adminStore";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 import type { EstadoPedido, Pedido } from "@/types/admin";
 import PedidoDetailDialog from "@/admin/components/PedidoDetailDialog";
 
@@ -21,10 +22,17 @@ const estadoStyles: Record<EstadoPedido, string> = {
 const estados: EstadoPedido[] = ["pendiente", "preparando", "listo", "entregado", "cancelado"];
 
 const Pedidos = () => {
-  const pedidos = useAdminStore(getPedidos);
+  const { toast } = useToast();
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [search, setSearch] = useState("");
   const [filterEstado, setFilterEstado] = useState<"todos" | EstadoPedido>("todos");
   const [selected, setSelected] = useState<Pedido | null>(null);
+
+  const cargar = () => {
+    api.pedidos.list().then(setPedidos);
+  };
+
+  useEffect(() => { cargar(); }, []);
 
   const filtered = useMemo(() => {
     const t = search.toLowerCase();
@@ -40,6 +48,15 @@ const Pedidos = () => {
       })
       .sort((a, b) => +new Date(b.fecha) - +new Date(a.fecha));
   }, [pedidos, search, filterEstado]);
+
+  const handleEstado = async (p: Pedido, estado: EstadoPedido) => {
+    try {
+      const updated = await api.pedidos.updateEstado(p.id, estado);
+      setPedidos((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (err) {
+      toast({ title: "Error al actualizar estado", description: String(err), variant: "destructive" });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -107,7 +124,7 @@ const Pedidos = () => {
                     <td className="py-3 px-4 text-center">
                       <select
                         value={p.estado}
-                        onChange={(e) => updatePedidoEstado(p.id, e.target.value as EstadoPedido)}
+                        onChange={(e) => handleEstado(p, e.target.value as EstadoPedido)}
                         className={`text-[11px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border-0 cursor-pointer ${estadoStyles[p.estado]}`}
                       >
                         {estados.map((e) => (

@@ -1,24 +1,46 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { getConfig, saveConfig, useAdminStore } from "@/lib/adminStore";
+import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import type { SiteConfig } from "@/types/admin";
 
+const DEFAULT_CONFIG: SiteConfig = {
+  nombreNegocio: "Repuestos El Turco",
+  direccion: "Av. Principal 1234, Local 5",
+  telefono1: "+56 9 7742 4442",
+  telefono2: "+56 9 6629 3400",
+  whatsapp: "56977424442",
+  email: "contacto@repuestoselturco.cl",
+  horario: "Lun-Vie 9:00-18:00 | Sáb 10:00-14:00",
+  ciudad: "Santiago, Chile",
+};
+
 const Configuracion = () => {
-  const initial = useAdminStore(getConfig);
   const { toast } = useToast();
-  const [form, setForm] = useState<SiteConfig>(initial);
+  const [form, setForm] = useState<SiteConfig>(DEFAULT_CONFIG);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api.config.get().then(setForm).catch(() => {});
+  }, []);
 
   const set = <K extends keyof SiteConfig>(k: K, v: SiteConfig[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    saveConfig(form);
-    toast({ title: "Configuración guardada", description: "Los datos del sitio se actualizaron." });
+    setLoading(true);
+    try {
+      const updated = await api.config.update(form);
+      setForm(updated);
+      toast({ title: "Configuración guardada", description: "Los datos del sitio se actualizaron." });
+    } catch (err) {
+      toast({ title: "Error al guardar", description: String(err), variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -74,8 +96,8 @@ const Configuracion = () => {
           </div>
         </div>
 
-        <Button type="submit" className="gap-2">
-          <Save className="w-4 h-4" /> Guardar cambios
+        <Button type="submit" className="gap-2" disabled={loading}>
+          <Save className="w-4 h-4" /> {loading ? "Guardando..." : "Guardar cambios"}
         </Button>
       </form>
     </div>

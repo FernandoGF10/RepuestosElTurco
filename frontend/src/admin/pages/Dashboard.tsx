@@ -1,13 +1,26 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Package, ShoppingBag, DollarSign, AlertTriangle, ArrowRight, Users } from "lucide-react";
 import StatCard from "@/admin/components/StatCard";
-import { getPedidos, getProductos, useAdminStore } from "@/lib/adminStore";
+import { api } from "@/lib/api";
+import type { ProductoAdmin, Pedido } from "@/types/admin";
 
-const formatCLP = (n: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(n);
+const formatCLP = (n: number) =>
+  new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(n);
 
 const Dashboard = () => {
-  const productos = useAdminStore(getProductos);
-  const pedidos = useAdminStore(getPedidos);
+  const [productos, setProductos] = useState<ProductoAdmin[]>([]);
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      api.productos.list({ solo_activos: false }),
+      api.pedidos.list(),
+    ]).then(([p, ped]) => {
+      setProductos(p);
+      setPedidos(ped);
+    });
+  }, []);
 
   const totalVentas = pedidos.filter((p) => p.estado !== "cancelado").reduce((s, p) => s + p.total, 0);
   const pedidosPendientes = pedidos.filter((p) => p.estado === "pendiente" || p.estado === "preparando").length;

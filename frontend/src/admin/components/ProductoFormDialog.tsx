@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { categorias } from "@/data/repuestos";
-import { getProductos, upsertProducto } from "@/lib/adminStore";
+import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import type { ProductoAdmin } from "@/types/admin";
 
@@ -21,7 +21,9 @@ interface Props {
   producto: ProductoAdmin | null;
 }
 
-const empty: Omit<ProductoAdmin, "id"> = {
+type FormData = Omit<ProductoAdmin, "id">;
+
+const empty: FormData = {
   codigo: "",
   nombre: "",
   categoria: "Frenos",
@@ -37,9 +39,10 @@ const empty: Omit<ProductoAdmin, "id"> = {
 
 const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
   const { toast } = useToast();
-  const [form, setForm] = useState<Omit<ProductoAdmin, "id">>(empty);
+  const [form, setForm] = useState<FormData>(empty);
   const [compatText, setCompatText] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -63,16 +66,8 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
     if (!form.precio || form.precio <= 0) e.precio = "El precio debe ser mayor a 0.";
     if (form.stock < 0) e.stock = "El stock no puede ser negativo.";
     if (form.imagen && !/^(https?:|data:|\/|blob:)/.test(form.imagen)) {
-      e.imagen = "Debe ser una URL válida (jpg, png, etc.).";
+      e.imagen = "Debe ser una URL válida (https://...).";
     }
-    // Duplicado nombre+marca
-    const dup = getProductos().some(
-      (p) =>
-        p.id !== producto?.id &&
-        p.nombre.trim().toLowerCase() === form.nombre.trim().toLowerCase() &&
-        p.marca.trim().toLowerCase() === form.marca.trim().toLowerCase(),
-    );
-    if (dup) e.nombre = "Ya existe un producto con ese nombre y marca.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -87,24 +82,37 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
         return { auto: auto || line, anios: anios || "" };
       });
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    const final: ProductoAdmin = {
-      id: producto?.id ?? crypto.randomUUID(),
-      ...form,
-      imagen: form.imagen || "/placeholder.svg",
-      compatibilidad: parseCompat(),
-    };
-    upsertProducto(final);
-    toast({
-      title: producto ? "Producto actualizado" : "Producto creado",
-      description: final.nombre,
-    });
-    onOpenChange(false);
+    setLoading(true);
+    try {
+      const data: FormData = {
+        ...form,
+        imagen: form.imagen || "/placeholder.svg",
+        compatibilidad: parseCompat(),
+      };
+      if (producto) {
+        await api.productos.update(producto.id, data);
+        toast({ title: "Producto actualizado", description: data.nombre });
+      } else {
+        await api.productos.create(data);
+        toast({ title: "Producto creado", description: data.nombre });
+      }
+      onOpenChange(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("409") || msg.toLowerCase().includes("código")) {
+        setErrors((prev) => ({ ...prev, codigo: msg }));
+      } else {
+        toast({ title: "Error", description: msg, variant: "destructive" });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
+  const set = <K extends keyof FormData>(k: K, v: FormData[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
   return (
@@ -203,7 +211,9 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
           </div>
 
           <div>
-            <label className="text-sm font-medium">Compatibilidad (un vehículo por línea, formato: <code>Auto | Años</code>)</label>
+            <label className="text-sm font-medium">
+              Compatibilidad (un vehículo por línea, formato: <code>Auto | Años</code>)
+            </label>
             <Textarea
               rows={3}
               value={compatText}
@@ -227,7 +237,9 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">{producto ? "Guardar cambios" : "Crear producto"}</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Guardando..." : producto ? "Guardar cambios" : "Crear producto"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

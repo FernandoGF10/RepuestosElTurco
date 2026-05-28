@@ -1,14 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Edit2, Trash2, Power } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  deleteProducto,
-  getProductos,
-  toggleActivo,
-  updateStock,
-  useAdminStore,
-} from "@/lib/adminStore";
+import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import ProductoFormDialog from "@/admin/components/ProductoFormDialog";
 import type { ProductoAdmin } from "@/types/admin";
@@ -27,13 +21,19 @@ const formatCLP = (n: number) =>
   new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(n);
 
 const Productos = () => {
-  const productos = useAdminStore(getProductos);
   const { toast } = useToast();
+  const [productos, setProductos] = useState<ProductoAdmin[]>([]);
   const [search, setSearch] = useState("");
   const [estado, setEstado] = useState<"todos" | "activo" | "inactivo">("todos");
   const [editing, setEditing] = useState<ProductoAdmin | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<ProductoAdmin | null>(null);
+
+  const cargar = () => {
+    api.productos.list({ solo_activos: false }).then(setProductos);
+  };
+
+  useEffect(() => { cargar(); }, []);
 
   const filtered = useMemo(() => {
     const t = search.toLowerCase();
@@ -59,15 +59,36 @@ const Productos = () => {
     setDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleToggle = async (p: ProductoAdmin) => {
+    try {
+      const updated = await api.productos.toggle(p.id);
+      setProductos((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (err) {
+      toast({ title: "Error", description: String(err), variant: "destructive" });
+    }
+  };
+
+  const handleStockBlur = async (p: ProductoAdmin, stock: number) => {
+    const safe = Math.max(0, Math.floor(stock || 0));
+    if (safe === p.stock) return;
+    try {
+      const updated = await api.productos.updateStock(p.id, safe);
+      setProductos((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (err) {
+      toast({ title: "Error al actualizar stock", description: String(err), variant: "destructive" });
+    }
+  };
+
+  const handleConfirmDelete = async () => {
     if (!confirmDelete) return;
-    const res = deleteProducto(confirmDelete.id);
-    if (res.ok) {
+    try {
+      await api.productos.delete(confirmDelete.id);
+      setProductos((prev) => prev.filter((p) => p.id !== confirmDelete.id));
       toast({ title: "Producto eliminado", description: confirmDelete.nombre });
-    } else {
+    } catch (err) {
       toast({
         title: "No se puede eliminar",
-        description: res.reason,
+        description: err instanceof Error ? err.message : String(err),
         variant: "destructive",
       });
     }
@@ -136,72 +157,14 @@ const Productos = () => {
                 </tr>
               ) : (
                 filtered.map((p) => (
-                  <tr key={p.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <img src={p.imagen} alt="" className="w-10 h-10 rounded object-contain bg-muted shrink-0" />
-                        <div className="min-w-0">
-                          <p className="font-heading font-bold text-foreground truncate">{p.nombre}</p>
-                          <p className="text-xs text-muted-foreground">{p.categoria}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 font-mono text-xs hidden md:table-cell">{p.codigo}</td>
-                    <td className="py-3 px-4 hidden lg:table-cell">{p.marca}</td>
-                    <td className="py-3 px-4 text-right font-heading font-bold">{formatCLP(p.precio)}</td>
-                    <td className="py-3 px-4">
-                      <input
-                        type="number"
-                        min={0}
-                        value={p.stock}
-                        onChange={(e) => updateStock(p.id, parseInt(e.target.value || "0", 10))}
-                        className={`w-16 mx-auto block text-center font-bold rounded-md border px-2 py-1 text-sm ${
-                          p.stock === 0
-                            ? "border-destructive/30 bg-destructive/5 text-destructive"
-                            : p.stock <= 3
-                              ? "border-amber-300 bg-amber-50 text-amber-700"
-                              : "border-border bg-background text-foreground"
-                        }`}
-                      />
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span
-                        className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
-                          p.activo
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${p.activo ? "bg-emerald-500" : "bg-muted-foreground"}`} />
-                        {p.activo ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => toggleActivo(p.id)}
-                          title={p.activo ? "Desactivar" : "Activar"}
-                          className="p-2 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-                        >
-                          <Power className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(p)}
-                          title="Editar"
-                          className="p-2 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setConfirmDelete(p)}
-                          title="Eliminar"
-                          className="p-2 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  <ProductoRow
+                    key={p.id}
+                    producto={p}
+                    onEdit={handleEdit}
+                    onToggle={handleToggle}
+                    onDelete={setConfirmDelete}
+                    onStockBlur={handleStockBlur}
+                  />
                 ))
               )}
             </tbody>
@@ -211,7 +174,10 @@ const Productos = () => {
 
       <ProductoFormDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(o) => {
+          setDialogOpen(o);
+          if (!o) cargar();
+        }}
         producto={editing}
       />
 
@@ -226,13 +192,98 @@ const Productos = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+};
+
+interface RowProps {
+  producto: ProductoAdmin;
+  onEdit: (p: ProductoAdmin) => void;
+  onToggle: (p: ProductoAdmin) => void;
+  onDelete: (p: ProductoAdmin) => void;
+  onStockBlur: (p: ProductoAdmin, stock: number) => void;
+}
+
+const ProductoRow = ({ producto: p, onEdit, onToggle, onDelete, onStockBlur }: RowProps) => {
+  const [localStock, setLocalStock] = useState(p.stock);
+
+  useEffect(() => { setLocalStock(p.stock); }, [p.stock]);
+
+  return (
+    <tr className="hover:bg-muted/30 transition-colors">
+      <td className="py-3 px-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <img src={p.imagen} alt="" className="w-10 h-10 rounded object-contain bg-muted shrink-0" />
+          <div className="min-w-0">
+            <p className="font-heading font-bold text-foreground truncate">{p.nombre}</p>
+            <p className="text-xs text-muted-foreground">{p.categoria}</p>
+          </div>
+        </div>
+      </td>
+      <td className="py-3 px-4 font-mono text-xs hidden md:table-cell">{p.codigo}</td>
+      <td className="py-3 px-4 hidden lg:table-cell">{p.marca}</td>
+      <td className="py-3 px-4 text-right font-heading font-bold">{formatCLP(p.precio)}</td>
+      <td className="py-3 px-4">
+        <input
+          type="number"
+          min={0}
+          value={localStock}
+          onChange={(e) => setLocalStock(parseInt(e.target.value || "0", 10))}
+          onBlur={() => onStockBlur(p, localStock)}
+          className={`w-16 mx-auto block text-center font-bold rounded-md border px-2 py-1 text-sm ${
+            localStock === 0
+              ? "border-destructive/30 bg-destructive/5 text-destructive"
+              : localStock <= 3
+                ? "border-amber-300 bg-amber-50 text-amber-700"
+                : "border-border bg-background text-foreground"
+          }`}
+        />
+      </td>
+      <td className="py-3 px-4 text-center">
+        <span
+          className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
+            p.activo ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
+          }`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${p.activo ? "bg-emerald-500" : "bg-muted-foreground"}`} />
+          {p.activo ? "Activo" : "Inactivo"}
+        </span>
+      </td>
+      <td className="py-3 px-4">
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={() => onToggle(p)}
+            title={p.activo ? "Desactivar" : "Activar"}
+            className="p-2 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+          >
+            <Power className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onEdit(p)}
+            title="Editar"
+            className="p-2 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(p)}
+            title="Eliminar"
+            className="p-2 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </td>
+    </tr>
   );
 };
 

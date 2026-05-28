@@ -8,7 +8,7 @@ import {
 import { MessageCircle, Phone, User, Calendar, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { EstadoPedido, Pedido } from "@/types/admin";
-import { updatePedidoEstado } from "@/lib/adminStore";
+import { api } from "@/lib/api";
 
 const formatCLP = (n: number) =>
   new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(n);
@@ -60,7 +60,7 @@ const PedidoDetailDialog = ({ pedido, onClose }: Props) => {
               <label className="text-xs text-muted-foreground">Estado</label>
               <select
                 defaultValue={pedido.estado}
-                onChange={(e) => updatePedidoEstado(pedido.id, e.target.value as EstadoPedido)}
+                onChange={(e) => api.pedidos.updateEstado(pedido.id, e.target.value as EstadoPedido)}
                 className="block mt-1 w-full h-9 rounded-md border border-input bg-background px-2 text-sm capitalize"
               >
                 {estados.map((s) => <option key={s} value={s}>{s}</option>)}

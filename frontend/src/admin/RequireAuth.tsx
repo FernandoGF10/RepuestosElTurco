@@ -1,10 +1,9 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { getSession } from "@/lib/adminStore";
+import { api } from "@/lib/api";
 
 export const RequireAuth = ({ children }: { children: JSX.Element }) => {
-  const session = getSession();
   const location = useLocation();
-  if (!session) {
+  if (!api.token.get()) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
   return children;

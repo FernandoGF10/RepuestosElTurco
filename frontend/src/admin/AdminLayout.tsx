@@ -12,7 +12,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useState } from "react";
-import { logout, getSession } from "@/lib/adminStore";
+import { api } from "@/lib/api";
 import logo from "@/assets/logo-el-turco.png";
 
 const navItems = [
@@ -27,10 +27,10 @@ const navItems = [
 const AdminLayout = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const session = getSession();
+  const username = api.token.getUsername();
 
   const handleLogout = () => {
-    logout();
+    api.auth.logout();
     navigate("/admin/login", { replace: true });
   };
 
@@ -104,10 +104,10 @@ const AdminLayout = () => {
           <h1 className="font-heading font-bold text-foreground">Panel de administración</h1>
           <div className="ml-auto flex items-center gap-3 text-sm">
             <span className="hidden sm:inline text-muted-foreground">
-              Hola, <strong className="text-foreground">{session?.user ?? "admin"}</strong>
+              Hola, <strong className="text-foreground">{username}</strong>
             </span>
             <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground font-heading font-bold flex items-center justify-center text-xs">
-              {(session?.user ?? "A").substring(0, 1).toUpperCase()}
+              {username.substring(0, 1).toUpperCase()}
             </div>
           </div>
         </header>

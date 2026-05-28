@@ -1,48 +1,29 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { getPedidos, useAdminStore } from "@/lib/adminStore";
+import { api } from "@/lib/api";
 
 const formatCLP = (n: number) =>
   new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(n);
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
 
-interface Cliente {
+interface ClienteResumen {
   nombre: string;
   telefono: string;
-  email?: string;
-  pedidos: number;
-  totalGastado: number;
-  ultimaCompra: string;
+  email: string;
+  total_pedidos: number;
+  total_gastado: number;
+  ultimo_pedido: string;
 }
 
 const Clientes = () => {
-  const pedidos = useAdminStore(getPedidos);
+  const [clientes, setClientes] = useState<ClienteResumen[]>([]);
   const [search, setSearch] = useState("");
 
-  const clientes = useMemo<Cliente[]>(() => {
-    const map = new Map<string, Cliente>();
-    for (const p of pedidos) {
-      const key = p.cliente.telefono;
-      const existing = map.get(key);
-      if (existing) {
-        existing.pedidos += 1;
-        existing.totalGastado += p.total;
-        if (new Date(p.fecha) > new Date(existing.ultimaCompra)) existing.ultimaCompra = p.fecha;
-      } else {
-        map.set(key, {
-          nombre: p.cliente.nombre,
-          telefono: p.cliente.telefono,
-          email: p.cliente.email,
-          pedidos: 1,
-          totalGastado: p.total,
-          ultimaCompra: p.fecha,
-        });
-      }
-    }
-    return Array.from(map.values()).sort((a, b) => b.totalGastado - a.totalGastado);
-  }, [pedidos]);
+  useEffect(() => {
+    api.clientes.list().then(setClientes);
+  }, []);
 
   const filtered = useMemo(() => {
     const t = search.toLowerCase();
@@ -51,7 +32,7 @@ const Clientes = () => {
         !t ||
         c.nombre.toLowerCase().includes(t) ||
         c.telefono.includes(t) ||
-        c.email?.toLowerCase().includes(t),
+        c.email.toLowerCase().includes(t),
     );
   }, [clientes, search]);
 
@@ -113,9 +94,13 @@ const Clientes = () => {
                         <p className="text-foreground">{c.telefono}</p>
                         {c.email && <p className="text-xs text-muted-foreground">{c.email}</p>}
                       </td>
-                      <td className="py-3 px-4 text-center font-bold">{c.pedidos}</td>
-                      <td className="py-3 px-4 text-right font-heading font-bold text-primary">{formatCLP(c.totalGastado)}</td>
-                      <td className="py-3 px-4 hidden sm:table-cell text-muted-foreground">{formatDate(c.ultimaCompra)}</td>
+                      <td className="py-3 px-4 text-center font-bold">{c.total_pedidos}</td>
+                      <td className="py-3 px-4 text-right font-heading font-bold text-primary">
+                        {formatCLP(c.total_gastado)}
+                      </td>
+                      <td className="py-3 px-4 hidden sm:table-cell text-muted-foreground">
+                        {formatDate(c.ultimo_pedido)}
+                      </td>
                       <td className="py-3 px-4 text-right">
                         <a
                           href={wa}

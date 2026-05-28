@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, ShieldCheck, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { loginAttempt } from "@/lib/adminStore";
+import { api } from "@/lib/api";
 import logo from "@/assets/logo-el-turco.png";
 
 const Login = () => {
@@ -14,7 +14,7 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!user.trim() || !pass) {
@@ -22,15 +22,14 @@ const Login = () => {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      const res = loginAttempt(user, pass);
+    try {
+      await api.auth.login(user.trim(), pass);
+      navigate("/admin", { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No fue posible iniciar sesión.");
+    } finally {
       setLoading(false);
-      if (res.ok) {
-        navigate("/admin", { replace: true });
-      } else {
-        setError(res.error ?? "No fue posible iniciar sesión.");
-      }
-    }, 350);
+    }
   };
 
   return (

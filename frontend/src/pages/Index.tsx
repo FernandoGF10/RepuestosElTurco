@@ -1,68 +1,69 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import SiteHeader from "@/components/SiteHeader";
 import HeroBanner from "@/components/HeroBanner";
 import BrandStrip from "@/components/BrandStrip";
 import ProductCard from "@/components/ProductCard";
 import ProductDetailModal from "@/components/ProductDetailModal";
-import CartDrawer, { type CartItem } from "@/components/CartDrawer";
+import CartDrawer from "@/components/CartDrawer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SiteFooter from "@/components/SiteFooter";
-import { repuestos, categorias, type Repuesto } from "@/data/repuestos";
+import { categorias } from "@/data/repuestos";
+import { api } from "@/lib/api";
+import type { ProductoAdmin } from "@/types/admin";
+
+export type CartItem = { producto: ProductoAdmin; cantidad: number };
 
 const Index = () => {
+  const [productos, setProductos] = useState<ProductoAdmin[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("Todos");
-  const [selectedRepuesto, setSelectedRepuesto] = useState<Repuesto | null>(null);
+  const [selectedProducto, setSelectedProducto] = useState<ProductoAdmin | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
 
-
+  useEffect(() => {
+    api.productos.list({ solo_activos: true }).then(setProductos).catch(() => {
+      toast.error("No se pudieron cargar los productos.");
+    });
+  }, []);
 
   const cartCount = useMemo(() => cartItems.reduce((acc, item) => acc + item.cantidad, 0), [cartItems]);
 
-  const agregarAlCarrito = (repuesto: Repuesto) => {
-    if (!repuesto.enStock) {
+  const agregarAlCarrito = (producto: ProductoAdmin) => {
+    if (producto.stock === 0) {
       toast.error("Este repuesto no tiene stock disponible.");
       return;
     }
-
     setCartItems((prev) => {
-      const existing = prev.find((item) => item.repuesto.id === repuesto.id);
+      const existing = prev.find((item) => item.producto.id === producto.id);
       if (existing) {
         return prev.map((item) =>
-          item.repuesto.id === repuesto.id
-            ? { ...item, cantidad: item.cantidad + 1 }
-            : item,
+          item.producto.id === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item,
         );
       }
-      return [...prev, { repuesto, cantidad: 1 }];
+      return [...prev, { producto, cantidad: 1 }];
     });
-
     setCartOpen(true);
-    toast.success(`${repuesto.nombre} agregado al carrito.`);
+    toast.success(`${producto.nombre} agregado al carrito.`);
   };
 
   const aumentarCantidad = (id: string) => {
     setCartItems((prev) =>
-      prev.map((item) =>
-        item.repuesto.id === id ? { ...item, cantidad: item.cantidad + 1 } : item,
-      ),
+      prev.map((item) => item.producto.id === id ? { ...item, cantidad: item.cantidad + 1 } : item),
     );
   };
 
   const disminuirCantidad = (id: string) => {
     setCartItems((prev) =>
       prev
-        .map((item) =>
-          item.repuesto.id === id ? { ...item, cantidad: item.cantidad - 1 } : item,
-        )
+        .map((item) => item.producto.id === id ? { ...item, cantidad: item.cantidad - 1 } : item)
         .filter((item) => item.cantidad > 0),
     );
   };
 
   const quitarDelCarrito = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.repuesto.id !== id));
+    setCartItems((prev) => prev.filter((item) => item.producto.id !== id));
   };
 
   const vaciarCarrito = () => {
@@ -70,8 +71,8 @@ const Index = () => {
     toast.success("Carrito vaciado.");
   };
 
-  const filteredRepuestos = useMemo(() => {
-    return repuestos.filter((r) => {
+  const filteredProductos = useMemo(() => {
+    return productos.filter((r) => {
       const matchCategoria = categoriaActiva === "Todos" || r.categoria === categoriaActiva;
       const term = searchTerm.toLowerCase();
       const matchSearch =
@@ -80,10 +81,10 @@ const Index = () => {
         r.codigo.toLowerCase().includes(term) ||
         r.categoria.toLowerCase().includes(term) ||
         r.marca.toLowerCase().includes(term) ||
-        r.compatibilidad.some(c => c.auto.toLowerCase().includes(term));
+        r.compatibilidad.some((c) => c.auto.toLowerCase().includes(term));
       return matchCategoria && matchSearch;
     });
-  }, [searchTerm, categoriaActiva]);
+  }, [searchTerm, categoriaActiva, productos]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -107,7 +108,7 @@ const Index = () => {
               </h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              Mostrando <strong className="text-foreground">{filteredRepuestos.length}</strong> de {repuestos.length} repuestos
+              Mostrando <strong className="text-foreground">{filteredProductos.length}</strong> de {productos.length} repuestos
             </p>
           </div>
 
@@ -129,13 +130,13 @@ const Index = () => {
           </div>
 
           {/* Grid */}
-          {filteredRepuestos.length > 0 ? (
+          {filteredProductos.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredRepuestos.map((r) => (
+              {filteredProductos.map((r) => (
                 <ProductCard
                   key={r.id}
-                  repuesto={r}
-                  onVerMas={setSelectedRepuesto}
+                  producto={r}
+                  onVerMas={setSelectedProducto}
                   onAgregarCarrito={agregarAlCarrito}
                 />
               ))}
@@ -169,12 +170,13 @@ const Index = () => {
         onDecrease={disminuirCantidad}
         onRemove={quitarDelCarrito}
         onClear={vaciarCarrito}
+        onOrderSuccess={vaciarCarrito}
       />
 
-      {selectedRepuesto && (
+      {selectedProducto && (
         <ProductDetailModal
-          repuesto={selectedRepuesto}
-          onClose={() => setSelectedRepuesto(null)}
+          producto={selectedProducto}
+          onClose={() => setSelectedProducto(null)}
           onAgregarCarrito={agregarAlCarrito}
         />
       )}
