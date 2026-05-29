@@ -99,7 +99,7 @@ const SiteFooter = () => {
                 <Clock className="w-4 h-4 shrink-0" /> Lun-Vie 9-18h | Sáb 10-14h
               </p>
               <p className="flex items-center gap-2.5 text-card/50">
-                <MapPin className="w-4 h-4 shrink-0" /> Santiago, Chile
+                <MapPin className="w-4 h-4 shrink-0" /> Avenida el Olimpo 1635, local 4
               </p>
             </div>
           </div>
