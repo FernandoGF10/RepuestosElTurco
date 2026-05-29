@@ -179,7 +179,7 @@ const Checkout = () => {
                       <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase tracking-wider">Sin costo</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Av. Principal 1234, Local 5 · Santiago · Lun–Vie 9:00–18:00 | Sáb 10:00–14:00
+                      Av. el Olimpo 1635, Local 4 · Santiago · Lun–Vie 9:00–18:00 | Sáb 10:00–14:00
                     </p>
                   </div>
                 </label>
