@@ -8,6 +8,7 @@ import Index from "./pages/Index.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import PedidoConfirmado from "./pages/PedidoConfirmado.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Nosotros from "./pages/Nosotros.tsx";
 import AdminLayout from "@/admin/AdminLayout";
 import RequireAuth from "@/admin/RequireAuth";
 import Login from "@/admin/pages/Login";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/pedido/:numero" element={<PedidoConfirmado />} />
+            <Route path="/nosotros" element={<Nosotros />} />
             <Route path="/admin/login" element={<Login />} />
             <Route
               path="/admin"

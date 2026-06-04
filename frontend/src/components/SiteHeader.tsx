@@ -1,6 +1,6 @@
 import { Phone, Clock, Search, Menu, X, ShoppingCart, User } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import logo from "@/assets/logo-el-turco.png";
 
 interface SiteHeaderProps {
@@ -64,7 +64,6 @@ const SiteHeader = ({ searchTerm, onSearchChange, cartCount, onOpenCart }: SiteH
             {[
               { href: "#inicio", label: "Inicio" },
               { href: "#repuestos", label: "Repuestos" },
-              { href: "#nosotros", label: "Nosotros" },
               { href: "#contacto", label: "Contacto" },
             ].map((link) => (
               <a
@@ -75,6 +74,12 @@ const SiteHeader = ({ searchTerm, onSearchChange, cartCount, onOpenCart }: SiteH
                 {link.label}
               </a>
             ))}
+            <Link
+              to="/nosotros"
+              className="text-topbar-foreground/90 hover:text-topbar-foreground hover:bg-topbar-foreground/10 font-heading text-xs font-bold px-3 py-2 rounded-md transition-all uppercase tracking-wider"
+            >
+              Nosotros
+            </Link>
           </nav>
 
           {/* Icons */}
@@ -118,7 +123,7 @@ const SiteHeader = ({ searchTerm, onSearchChange, cartCount, onOpenCart }: SiteH
               </button>
             </div>
             <nav className="flex flex-col">
-              {["Inicio", "Repuestos", "Nosotros", "Contacto"].map((label) => (
+              {["Inicio", "Repuestos", "Contacto"].map((label) => (
                 <a
                   key={label}
                   href={`#${label.toLowerCase()}`}
@@ -128,6 +133,13 @@ const SiteHeader = ({ searchTerm, onSearchChange, cartCount, onOpenCart }: SiteH
                   {label}
                 </a>
               ))}
+              <Link
+                to="/nosotros"
+                onClick={() => setMenuOpen(false)}
+                className="py-2.5 text-topbar-foreground font-heading text-sm font-bold"
+              >
+                Nosotros
+              </Link>
             </nav>
           </div>
         )}

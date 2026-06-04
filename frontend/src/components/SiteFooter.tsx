@@ -1,4 +1,5 @@
 import { Phone, MapPin, Clock, Mail, Facebook, Instagram, ArrowUp } from "lucide-react";
+import { Link } from "react-router-dom";
 import logo from "@/assets/logo-el-turco.png";
 import { categorias } from "@/data/repuestos";
 
@@ -75,11 +76,17 @@ const SiteFooter = () => {
           </div>
 
           {/* About */}
-          <div id="nosotros" className="space-y-4">
+          <div className="space-y-4">
             <h4 className="font-heading font-bold text-sm uppercase tracking-wider text-card/90">Nosotros</h4>
             <p className="text-sm text-card/50 leading-relaxed">
               En Repuestos El Turco llevamos años brindando el mejor servicio y los mejores repuestos para tu vehículo. Trabajamos con marcas reconocidas como Monroe, Valeo, Bosch, Brembo, TRW, Gates, Ferodo y Mann Filter.
             </p>
+            <Link
+              to="/nosotros"
+              className="inline-block text-sm text-secondary hover:brightness-110 transition-colors font-medium"
+            >
+              Conoce nuestra historia →
+            </Link>
           </div>
 
           {/* Contact */}
