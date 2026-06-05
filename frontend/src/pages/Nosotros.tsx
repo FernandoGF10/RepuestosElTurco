@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Store, Users, MapPin } from "lucide-react";
 import logo from "@/assets/logo-el-turco.png";
+import SiteFooter from "@/components/SiteFooter";
 
 const Nosotros = () => {
   return (
@@ -127,11 +128,7 @@ const Nosotros = () => {
         </section>
       </main>
 
-      <footer className="bg-foreground text-card py-4">
-        <div className="container text-center text-xs text-card/40">
-          © 2026 Repuestos El Turco. Todos los derechos reservados.
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 };
