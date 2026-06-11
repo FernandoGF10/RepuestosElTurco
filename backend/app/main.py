@@ -2,12 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+
 from app.core.config import get_settings
 from app.core.database import engine, Base
 from app.core.security import hash_password
-from app.routers import auth, productos, pedidos, clientes, reportes, config, usuarios
+from app.routers import auth, productos, pedidos, clientes, reportes, config, usuarios, marcas
 
 settings = get_settings()
+
+print("=========== BACKEND NUEVO ===========")
+print("CORS:", settings.cors_origins_list)
 
 
 def _seed_admin():
@@ -107,8 +111,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -120,6 +124,7 @@ app.include_router(clientes.router)
 app.include_router(reportes.router)
 app.include_router(config.router)
 app.include_router(usuarios.router)
+app.include_router(marcas.router)
 
 
 @app.get("/", tags=["health"])

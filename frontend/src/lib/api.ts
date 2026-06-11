@@ -326,18 +326,51 @@ export const api = {
   },
 
   config: {
-    get: async (): Promise<SiteConfig> => {
-      const raw = await request<RawConfig>("/api/config");
-      return toConfig(raw);
-    },
-    update: async (data: SiteConfig): Promise<SiteConfig> => {
-      const raw = await request<RawConfig>("/api/config", {
-        method: "PUT",
-        body: JSON.stringify(fromConfig(data)),
-      });
-      return toConfig(raw);
-    },
+  get: async (): Promise<SiteConfig> => {
+    const raw = await request<RawConfig>("/api/config");
+    return toConfig(raw);
   },
+  update: async (data: SiteConfig): Promise<SiteConfig> => {
+    const raw = await request<RawConfig>("/api/config", {
+      method: "PUT",
+      body: JSON.stringify(fromConfig(data)),
+    });
+    return toConfig(raw);
+  },
+},
+
+marcas: {
+  list: () =>
+    request<{ id: number; nombre: string; logo: string }[]>(
+      "/api/marcas/"
+    ),
+
+  create: (data: { nombre: string; logo: string }) =>
+    request<{ id: number; nombre: string; logo: string }>(
+      "/api/marcas/",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    ),
+
+  delete: (id: number) =>
+    request<void>(
+      `/api/marcas/${id}`,
+      {
+        method: "DELETE",
+      }
+    ),
+},
+
+  marcasPublic: {
+  list: () =>
+    request<{ id: number; nombre: string; logo: string }[]>(
+      "/api/marcas/"
+    ),
+},
 
   token,
 };
+
+
