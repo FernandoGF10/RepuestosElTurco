@@ -18,25 +18,44 @@ import type { ProductoAdmin } from "@/types/admin";
 interface Familia {
   id: number;
   nombre: string;
-  imagen: string;
+  imagen?: string;
+}
+
+interface Subfamilia {
+  id: number;
+  nombre: string;
+  familia_id: number;
 }
 
 const Index = () => {
   const { addItem, setCartOpen, count } = useCart();
 
   const [familias, setFamilias] = useState<Familia[]>([]);
+  const [subfamilias, setSubfamilias] = useState<Subfamilia[]>([]);
   const [productos, setProductos] = useState<ProductoAdmin[]>([]);
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [familiaActiva, setFamiliaActiva] = useState<number | null>(null);
+
+  const [familiaActiva, setFamiliaActiva] =
+    useState<number | null>(null);
+
+  const [subfamiliaActiva, setSubfamiliaActiva] =
+    useState<number | null>(null);
+
   const [selectedProducto, setSelectedProducto] =
     useState<ProductoAdmin | null>(null);
 
   useEffect(() => {
-    api.familias
-      .list()
-      .then(setFamilias)
+    Promise.all([
+      api.familias.list(),
+      api.subfamilias.list(),
+    ])
+        .then(([familiasData, subfamiliasData]: [Familia[], Subfamilia[]]) => {
+          setFamilias(familiasData);
+          setSubfamilias(subfamiliasData);
+        })
       .catch(() => {
-        toast.error("No se pudieron cargar las familias.");
+        toast.error("No se pudieron cargar las categorías.");
       });
   }, []);
 
@@ -52,7 +71,12 @@ const Index = () => {
   const filteredProductos = useMemo(() => {
     return productos.filter((r) => {
       const matchFamilia =
-        familiaActiva === null || r.familia_id === familiaActiva;
+        familiaActiva === null ||
+        r.familia_id === familiaActiva;
+
+      const matchSubfamilia =
+        subfamiliaActiva === null ||
+        r.subfamilia_id === subfamiliaActiva;
 
       const term = searchTerm.toLowerCase();
 
@@ -65,9 +89,18 @@ const Index = () => {
           c.auto.toLowerCase().includes(term)
         );
 
-      return matchFamilia && matchSearch;
+      return (
+        matchFamilia &&
+        matchSubfamilia &&
+        matchSearch
+      );
     });
-  }, [productos, searchTerm, familiaActiva]);
+  }, [
+    productos,
+    familiaActiva,
+    subfamiliaActiva,
+    searchTerm,
+  ]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -107,7 +140,10 @@ const Index = () => {
           <div className="flex flex-wrap gap-2 mb-8 pb-4 border-b border-border">
 
             <button
-              onClick={() => setFamiliaActiva(null)}
+              onClick={() => {
+                setFamiliaActiva(null);
+                setSubfamiliaActiva(null);
+              }}
               className={`font-heading text-xs font-bold px-4 py-2 rounded-full transition-all ${
                 familiaActiva === null
                   ? "bg-primary text-primary-foreground shadow-md"
@@ -117,19 +153,54 @@ const Index = () => {
               Todos
             </button>
 
-            {familias.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFamiliaActiva(f.id)}
-                className={`font-heading text-xs font-bold px-4 py-2 rounded-full transition-all ${
-                  familiaActiva === f.id
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "bg-card text-muted-foreground border border-border hover:border-primary/30 hover:text-foreground"
-                }`}
-              >
-                {f.nombre}
-              </button>
-            ))}
+            {familias.map((familia) => {
+              const subs = subfamilias.filter(
+                (s) => s.familia_id === familia.id
+              );
+
+              return (
+                <div
+                  key={familia.id}
+                  className="relative group"
+                >
+                  <button
+                    onClick={() => {
+                      setFamiliaActiva(familia.id);
+                      setSubfamiliaActiva(null);
+                    }}
+                    className={`font-heading text-xs font-bold px-4 py-2 rounded-full transition-all ${
+                      familiaActiva === familia.id
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "bg-card text-muted-foreground border border-border hover:border-primary/30 hover:text-foreground"
+                    }`}
+                  >
+                    {familia.nombre}
+                  </button>
+
+                  {subs.length > 0 && (
+                    <div className="absolute top-full left-0 min-w-[240px] bg-white rounded-xl border shadow-xl z-50 hidden group-hover:block">
+
+                      {subs.map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={() => {
+                            setFamiliaActiva(familia.id);
+                            setSubfamiliaActiva(sub.id);
+                          }}
+                          className={`block w-full text-left px-4 py-3 text-sm hover:bg-slate-100 transition ${
+                            subfamiliaActiva === sub.id
+                              ? "bg-blue-50 text-primary font-semibold"
+                              : ""
+                          }`}
+                        >
+                          {sub.nombre}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {filteredProductos.length > 0 ? (
@@ -154,13 +225,14 @@ const Index = () => {
               </p>
 
               <p className="text-sm text-muted-foreground">
-                Intenta con otro término de búsqueda o familia.
+                Intenta con otro término de búsqueda o categoría.
               </p>
 
               <button
                 onClick={() => {
                   setSearchTerm("");
                   setFamiliaActiva(null);
+                  setSubfamiliaActiva(null);
                 }}
                 className="text-sm text-primary font-heading font-bold hover:underline"
               >
