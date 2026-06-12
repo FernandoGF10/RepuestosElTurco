@@ -6,12 +6,9 @@ from contextlib import asynccontextmanager
 from app.core.config import get_settings
 from app.core.database import engine, Base
 from app.core.security import hash_password
-from app.routers import auth, productos, pedidos, clientes, reportes, config, usuarios, marcas
+from app.routers import auth, productos, pedidos, clientes, reportes, config, usuarios, marcas, familias, subfamilias
 
 settings = get_settings()
-
-print("=========== BACKEND NUEVO ===========")
-print("CORS:", settings.cors_origins_list)
 
 
 def _seed_admin():
@@ -125,6 +122,8 @@ app.include_router(reportes.router)
 app.include_router(config.router)
 app.include_router(usuarios.router)
 app.include_router(marcas.router)
+app.include_router(familias.router)
+app.include_router(subfamilias.router)
 
 
 @app.get("/", tags=["health"])

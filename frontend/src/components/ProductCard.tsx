@@ -42,7 +42,7 @@ const ProductCard = ({ producto, onVerMas, onAgregarCarrito }: ProductCardProps)
       {/* Content */}
       <div className="p-4 flex flex-col flex-1 gap-2">
         <span className="text-[10px] text-muted-foreground font-heading font-bold uppercase tracking-[0.15em]">
-          {producto.categoria}
+            {producto.subfamilia_nombre}
         </span>
         <h3 className="font-heading font-bold text-foreground text-sm leading-tight">
           {producto.nombre}

@@ -72,7 +72,10 @@ interface RawProducto {
   id: string;
   codigo: string;
   nombre: string;
-  categoria: string;
+  familia_id: number | null;
+  subfamilia_id: number | null;
+  familia_nombre?: string;
+  subfamilia_nombre?: string;
   marca: string;
   precio: number;
   descripcion: string;
@@ -123,7 +126,10 @@ function toProducto(r: RawProducto): ProductoAdmin {
     id: r.id,
     codigo: r.codigo,
     nombre: r.nombre,
-    categoria: r.categoria,
+    familia_id: r.familia_id ?? undefined,
+    subfamilia_id: r.subfamilia_id ?? undefined,
+    familia_nombre: r.familia_nombre,
+    subfamilia_nombre: r.subfamilia_nombre,
     marca: r.marca,
     precio: r.precio,
     descripcion: r.descripcion,
@@ -326,49 +332,57 @@ export const api = {
   },
 
   config: {
-  get: async (): Promise<SiteConfig> => {
-    const raw = await request<RawConfig>("/api/config");
-    return toConfig(raw);
+    get: async (): Promise<SiteConfig> => {
+      const raw = await request<RawConfig>("/api/config");
+      return toConfig(raw);
+    },
+    update: async (data: SiteConfig): Promise<SiteConfig> => {
+      const raw = await request<RawConfig>("/api/config", {
+        method: "PUT",
+        body: JSON.stringify(fromConfig(data)),
+      });
+      return toConfig(raw);
+    },
   },
-  update: async (data: SiteConfig): Promise<SiteConfig> => {
-    const raw = await request<RawConfig>("/api/config", {
-      method: "PUT",
-      body: JSON.stringify(fromConfig(data)),
-    });
-    return toConfig(raw);
+
+  marcas: {
+    list: () =>
+        request<{ id: number; nombre: string; logo: string }[]>(
+            "/api/marcas/"
+        ),
+
+    create: (data: { nombre: string; logo: string }) =>
+        request<{ id: number; nombre: string; logo: string }>(
+            "/api/marcas/",
+            {
+              method: "POST",
+              body: JSON.stringify(data),
+            }
+        ),
+
+    delete: (id: number) =>
+        request<void>(
+            `/api/marcas/${id}`,
+            {
+              method: "DELETE",
+            }
+        ),
   },
-},
-
-marcas: {
-  list: () =>
-    request<{ id: number; nombre: string; logo: string }[]>(
-      "/api/marcas/"
-    ),
-
-  create: (data: { nombre: string; logo: string }) =>
-    request<{ id: number; nombre: string; logo: string }>(
-      "/api/marcas/",
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-      }
-    ),
-
-  delete: (id: number) =>
-    request<void>(
-      `/api/marcas/${id}`,
-      {
-        method: "DELETE",
-      }
-    ),
-},
 
   marcasPublic: {
-  list: () =>
-    request<{ id: number; nombre: string; logo: string }[]>(
-      "/api/marcas/"
-    ),
-},
+    list: () =>
+        request<{ id: number; nombre: string; logo: string }[]>(
+            "/api/marcas/"
+        ),
+  },
+
+  familias: {
+    list: () => request("/api/familias/")
+  },
+
+  subfamilias: {
+    list: () => request("/api/subfamilias/")
+  },
 
   token,
 };

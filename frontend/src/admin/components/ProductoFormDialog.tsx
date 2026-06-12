@@ -10,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { categorias } from "@/data/repuestos";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import type { ProductoAdmin } from "@/types/admin";
@@ -26,7 +25,8 @@ type FormData = Omit<ProductoAdmin, "id">;
 const empty: FormData = {
   codigo: "",
   nombre: "",
-  categoria: "Frenos",
+  familia_id: undefined,
+  subfamilia_id: undefined,
   marca: "",
   precio: 0,
   descripcion: "",
@@ -37,12 +37,48 @@ const empty: FormData = {
   activo: true,
 };
 
+interface Familia {
+  id: number;
+  nombre: string;
+  imagen: string;
+}
+
+interface Subfamilia {
+  id: number;
+  nombre: string;
+  familia_id: number;
+}
+
 const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
   const { toast } = useToast();
   const [form, setForm] = useState<FormData>(empty);
   const [compatText, setCompatText] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  const [familias, setFamilias] = useState<Familia[]>([]);
+  const [subfamilias, setSubfamilias] = useState<Subfamilia[]>([]);
+
+  const [familiaSeleccionada, setFamiliaSeleccionada] = useState<number | null>(null);
+  const [subfamiliaSeleccionada, setSubfamiliaSeleccionada] = useState<number | null>(null);
+
+  useEffect(() => {
+  if (!open) return;
+
+  const cargar = async () => {
+    try {
+      const familiasData = await api.familias.list();
+      const subfamiliasData = await api.subfamilias.list();
+
+      setFamilias(familiasData as Familia[]);
+      setSubfamilias(subfamiliasData as Subfamilia[]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  cargar();
+}, [open]);
 
   useEffect(() => {
     if (open) {
@@ -89,9 +125,11 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
     try {
       const data: FormData = {
         ...form,
+        subfamilia_id: subfamiliaSeleccionada,
         imagen: form.imagen || "/placeholder.svg",
         compatibilidad: parseCompat(),
       };
+      console.log("ENVIANDO:", data);
       if (producto) {
         await api.productos.update(producto.id, data);
         toast({ title: "Producto actualizado", description: data.nombre });
@@ -147,15 +185,46 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
 
           <div className="grid sm:grid-cols-3 gap-3">
             <div>
-              <label className="text-sm font-medium">Categoría *</label>
+              <label className="text-sm font-medium">Familia *</label>
+
               <select
-                value={form.categoria}
-                onChange={(e) => set("categoria", e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={familiaSeleccionada ?? ""}
+                  onChange={(e) => {
+                    const id = Number(e.target.value);
+                    setFamiliaSeleccionada(id);
+                    setSubfamiliaSeleccionada(null);
+                  }}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                {categorias.filter((c) => c !== "Todos").map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                <option value="">Seleccione una familia</option>
+
+                {familias.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.nombre}
+                    </option>
                 ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Subfamilia *</label>
+
+              <select
+                  value={subfamiliaSeleccionada ?? ""}
+                  onChange={(e) => {
+                    setSubfamiliaSeleccionada(Number(e.target.value));
+                  }}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Seleccione una subfamilia</option>
+
+                {subfamilias
+                    .filter((s) => s.familia_id === familiaSeleccionada)
+                    .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.nombre}
+                        </option>
+                    ))}
               </select>
             </div>
             <div>

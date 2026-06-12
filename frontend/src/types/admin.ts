@@ -4,7 +4,10 @@ export interface ProductoAdmin {
   id: string;
   codigo: string;
   nombre: string;
-  categoria: string;
+  familia_id?: number;
+  subfamilia_id?: number;
+  familia_nombre?: string;
+  subfamilia_nombre?: string;
   marca: string;
   precio: number;
   descripcion: string;

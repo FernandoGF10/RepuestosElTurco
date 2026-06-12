@@ -15,16 +15,23 @@ router = APIRouter(prefix="/api/productos", tags=["productos"])
 
 @router.get("", response_model=list[ProductoOut])
 def listar_productos(
-    categoria: str | None = Query(None),
+    familia_id: int | None = Query(None),
+    subfamilia_id: int | None = Query(None),
     buscar: str | None = Query(None),
     solo_activos: bool = Query(True),
     db: Session = Depends(get_db),
 ):
     q = db.query(Producto)
+
     if solo_activos:
         q = q.filter(Producto.activo == True)
-    if categoria and categoria != "Todos":
-        q = q.filter(Producto.categoria == categoria)
+
+    if familia_id is not None:
+        q = q.filter(Producto.familia_id == familia_id)
+
+    if subfamilia_id is not None:
+        q = q.filter(Producto.subfamilia_id == subfamilia_id)
+
     if buscar:
         term = f"%{buscar}%"
         q = q.filter(
@@ -34,7 +41,25 @@ def listar_productos(
                 Producto.marca.ilike(term),
             )
         )
-    return q.order_by(Producto.nombre).all()
+
+    productos = q.order_by(Producto.nombre).all()
+
+    resultado = []
+
+    for p in productos:
+        item = ProductoOut.model_validate(p)
+
+        item.familia_nombre = (
+            p.familia.nombre if p.familia else None
+        )
+
+        item.subfamilia_nombre = (
+            p.subfamilia.nombre if p.subfamilia else None
+        )
+
+        resultado.append(item)
+
+    return resultado
 
 
 @router.get("/{producto_id}", response_model=ProductoOut)

@@ -12,7 +12,8 @@ class Compatibilidad(BaseModel):
 class ProductoBase(BaseModel):
     codigo: str
     nombre: str
-    categoria: str
+    familia_id: int
+    subfamilia_id: int
     marca: str
     precio: int
     descripcion: str = ""
@@ -30,7 +31,7 @@ class ProductoCreate(ProductoBase):
 class ProductoUpdate(BaseModel):
     codigo: Optional[str] = None
     nombre: Optional[str] = None
-    categoria: Optional[str] = None
+    subfamilia_id: Optional[int] = None
     marca: Optional[str] = None
     precio: Optional[int] = None
     descripcion: Optional[str] = None
@@ -54,6 +55,13 @@ class ProductoStockUpdate(BaseModel):
 
 class ProductoOut(ProductoBase):
     id: uuid.UUID
+
+    familia_id: Optional[int] = None
+    subfamilia_id: Optional[int] = None
+
+    familia_nombre: Optional[str] = None
+    subfamilia_nombre: Optional[str] = None
+
     creado_en: datetime
     actualizado_en: datetime
 
