@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_current_user, hash_password
+from app.core.security import get_current_user, require_admin, hash_password
 from app.models.usuario import Usuario
 from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioOut
 import uuid
@@ -33,13 +33,14 @@ def obtener_usuario(
 def crear_usuario(
     data: UsuarioCreate,
     db: Session = Depends(get_db),
-    _: Usuario = Depends(get_current_user),
+    _: Usuario = Depends(require_admin),
 ):
     if db.query(Usuario).filter(Usuario.username == data.username).first():
         raise HTTPException(status_code=409, detail=f"Ya existe un usuario con nombre '{data.username}'")
     u = Usuario(
         username=data.username,
         hashed_password=hash_password(data.password),
+        rol=data.rol,
         activo=data.activo,
     )
     db.add(u)
@@ -67,8 +68,10 @@ def actualizar_usuario(
     if data.password is not None:
         u.hashed_password = hash_password(data.password)
 
+    if data.rol is not None:
+        u.rol = data.rol
+
     if data.activo is not None:
-        # No desactivar al único usuario activo
         activos = db.query(Usuario).filter(Usuario.activo == True).count()
         if not data.activo and activos <= 1 and u.activo:
             raise HTTPException(status_code=409, detail="No puedes desactivar al único usuario activo")
@@ -83,7 +86,7 @@ def actualizar_usuario(
 def eliminar_usuario(
     usuario_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current: Usuario = Depends(get_current_user),
+    current: Usuario = Depends(require_admin),
 ):
     u = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not u:

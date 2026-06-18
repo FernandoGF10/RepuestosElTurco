@@ -28,18 +28,22 @@ function resolveImage(codigo: string, imagenUrl: string): string {
 // ─── Token management ────────────────────────────────────────────────────────
 const TOKEN_KEY = "elturco:token";
 const USERNAME_KEY = "elturco:username";
+const ROL_KEY = "elturco:rol";
 
 export const token = {
   get: (): string | null => localStorage.getItem(TOKEN_KEY),
-  set: (t: string, username: string) => {
+  set: (t: string, username: string, rol: string) => {
     localStorage.setItem(TOKEN_KEY, t);
     localStorage.setItem(USERNAME_KEY, username);
+    localStorage.setItem(ROL_KEY, rol);
   },
   clear: () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USERNAME_KEY);
+    localStorage.removeItem(ROL_KEY);
   },
   getUsername: (): string => localStorage.getItem(USERNAME_KEY) ?? "admin",
+  getRol: (): string => localStorage.getItem(ROL_KEY) ?? "admin",
 };
 
 // ─── Base fetch wrapper ──────────────────────────────────────────────────────
@@ -65,6 +69,15 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(body?.detail ?? `Error ${res.status}`);
   }
   return body as T;
+}
+
+// ─── Shared output types ─────────────────────────────────────────────────────
+export interface UsuarioOut {
+  id: string;
+  username: string;
+  rol: string;
+  activo: boolean;
+  creado_en: string;
 }
 
 // ─── Raw API types (snake_case from backend) ─────────────────────────────────
@@ -191,14 +204,14 @@ function fromConfig(c: SiteConfig): Partial<RawConfig> {
 export const api = {
   auth: {
     login: async (username: string, password: string) => {
-      const data = await request<{ access_token: string; username: string }>(
+      const data = await request<{ access_token: string; username: string; rol: string }>(
         "/api/auth/login",
         { method: "POST", body: JSON.stringify({ username, password }) },
       );
-      token.set(data.access_token, data.username);
+      token.set(data.access_token, data.username, data.rol);
       return data;
     },
-    me: () => request<{ username: string }>("/api/auth/me"),
+    me: () => request<{ username: string; rol: string }>("/api/auth/me"),
     logout: () => token.clear(),
   },
 
@@ -382,6 +395,15 @@ export const api = {
 
   subfamilias: {
     list: () => request("/api/subfamilias/")
+  },
+
+  usuarios: {
+    list: () => request<UsuarioOut[]>("/api/usuarios"),
+    create: (data: { username: string; password: string; rol: string }) =>
+      request<UsuarioOut>("/api/usuarios", { method: "POST", body: JSON.stringify({ ...data, activo: true }) }),
+    update: (id: string, data: { username?: string; password?: string; rol?: string; activo?: boolean }) =>
+      request<UsuarioOut>(`/api/usuarios/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) => request<void>(`/api/usuarios/${id}`, { method: "DELETE" }),
   },
 
   token,

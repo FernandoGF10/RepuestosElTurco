@@ -10,24 +10,27 @@ import {
   Menu,
   X,
   ExternalLink,
+  UserCog,
 } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import logo from "@/assets/logo-el-turco.png";
 
-const navItems = [
-  { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
-  { to: "/admin/productos", icon: Package, label: "Productos" },
-  { to: "/admin/pedidos", icon: ShoppingBag, label: "Pedidos" },
-  { to: "/admin/clientes", icon: Users, label: "Clientes" },
-  { to: "/admin/reportes", icon: BarChart3, label: "Reportes" },
-  { to: "/admin/configuracion", icon: Settings, label: "Configuración" },
-];
-
 const AdminLayout = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const username = api.token.getUsername();
+  const rol = api.token.getRol();
+
+  const navItems = [
+    { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
+    { to: "/admin/productos", icon: Package, label: "Productos" },
+    { to: "/admin/pedidos", icon: ShoppingBag, label: "Pedidos" },
+    { to: "/admin/clientes", icon: Users, label: "Clientes" },
+    { to: "/admin/reportes", icon: BarChart3, label: "Reportes" },
+    { to: "/admin/configuracion", icon: Settings, label: "Configuración" },
+    ...(rol === "admin" ? [{ to: "/admin/usuarios", icon: UserCog, label: "Usuarios" }] : []),
+  ];
 
   const handleLogout = () => {
     api.auth.logout();
@@ -120,6 +123,7 @@ const AdminLayout = () => {
           <div className="ml-auto flex items-center gap-3">
             <span className="hidden sm:inline text-sm text-muted-foreground">
               Hola, <strong className="text-foreground font-heading">{username}</strong>
+              {" "}<span className={`text-[10px] font-heading font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${rol === "admin" ? "bg-primary/10 text-primary" : "bg-secondary/20 text-secondary-foreground"}`}>{rol}</span>
             </span>
             <div className="w-8 h-8 rounded-full bg-primary text-white font-heading font-black flex items-center justify-center text-xs shadow-sm">
               {username.substring(0, 1).toUpperCase()}
