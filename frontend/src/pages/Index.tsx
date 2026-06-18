@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { ChevronLeft, ChevronRight, Wrench, LayoutGrid } from "lucide-react";
 
 import SiteHeader from "@/components/SiteHeader";
 import HeroBanner from "@/components/HeroBanner";
@@ -44,6 +45,27 @@ const Index = () => {
 
   const [selectedProducto, setSelectedProducto] =
     useState<ProductoAdmin | null>(null);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const [openFamiliaId, setOpenFamiliaId] = useState<number | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openSubmenu = (familiaId: number, target: HTMLElement) => {
+    if (closeTimeout.current) clearTimeout(closeTimeout.current);
+    const rect = target.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 8, left: rect.left + rect.width / 2 });
+    setOpenFamiliaId(familiaId);
+  };
+
+  const scheduleCloseSubmenu = () => {
+    closeTimeout.current = setTimeout(() => setOpenFamiliaId(null), 150);
+  };
+
+  const cancelCloseSubmenu = () => {
+    if (closeTimeout.current) clearTimeout(closeTimeout.current);
+  };
 
   useEffect(() => {
     Promise.all([
@@ -102,6 +124,10 @@ const Index = () => {
     searchTerm,
   ]);
 
+  const scrollByAmount = (amount: number) => {
+    scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SiteHeader
@@ -128,79 +154,184 @@ const Index = () => {
               </h2>
             </div>
 
-            <p className="text-sm text-muted-foreground">
+            <div className="inline-flex items-center gap-2 bg-secondary/90 text-secondary-foreground px-3 py-1 rounded-full w-fit">
+                        <span className="w-2 h-2 rounded-full bg-secondary-foreground animate-pulse" />
+
+                        <p className="text-sm text-muted-foreground">
               Mostrando{" "}
               <strong className="text-foreground">
                 {filteredProductos.length}
               </strong>{" "}
               de {productos.length} repuestos
             </p>
+                    </div>
+
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-8 pb-4 border-b border-border">
-
+          {/* Carrusel de familias con imagen */}
+          <div className="relative mb-8 pb-5 border-b border-border md:px-11">
             <button
-              onClick={() => {
-                setFamiliaActiva(null);
-                setSubfamiliaActiva(null);
-              }}
-              className={`font-heading text-xs font-bold px-4 py-2 rounded-full transition-all ${
-                familiaActiva === null
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-card text-muted-foreground border border-border hover:border-primary/30 hover:text-foreground"
-              }`}
+              type="button"
+              onClick={() => scrollByAmount(-280)}
+              aria-label="Desplazar a la izquierda"
+              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card border border-border shadow-md items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
             >
-              Todos
+              <ChevronLeft className="w-4 h-4" />
             </button>
 
-            {familias.map((familia) => {
-              const subs = subfamilias.filter(
-                (s) => s.familia_id === familia.id
+            <div
+              ref={scrollRef}
+              onScroll={() => setOpenFamiliaId(null)}
+              className="flex gap-3 overflow-x-auto pb-1 snap-x scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              <button
+                onClick={() => {
+                  setFamiliaActiva(null);
+                  setSubfamiliaActiva(null);
+                }}
+                className={`relative flex-shrink-0 snap-start flex flex-col items-center pt-5 px-2 gap-3 w-[124px] h-[148px] rounded-2xl border transition-all duration-200 ${
+                  familiaActiva === null
+                    ? "border-primary/40 bg-gradient-to-b from-primary/10 to-primary/5 shadow-lg shadow-primary/10 -translate-y-0.5"
+                    : "border-border/70 bg-card hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
+                }`}
+              >
+                <div
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors ${
+                    familiaActiva === null
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <LayoutGrid className="w-6 h-6" />
+                </div>
+
+                <span
+                  className={`text-xs font-heading font-bold text-center leading-tight h-7 flex items-center justify-center ${
+                    familiaActiva === null ? "text-primary" : "text-foreground"
+                  }`}
+                >
+                  Todos
+                </span>
+
+                {familiaActiva === null && (
+                  <span className="absolute -bottom-px left-1/2 -translate-x-1/2 w-7 h-0.5 rounded-full bg-primary" />
+                )}
+              </button>
+
+              {familias.map((familia) => {
+                const subs = subfamilias.filter(
+                  (s) => s.familia_id === familia.id
+                );
+                const isActive = familiaActiva === familia.id;
+
+                return (
+                  <div
+                    key={familia.id}
+                    className="relative flex-shrink-0"
+                    onMouseEnter={(e) => {
+                      if (subs.length > 0) {
+                        openSubmenu(familia.id, e.currentTarget);
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      if (subs.length > 0) scheduleCloseSubmenu();
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        setFamiliaActiva(familia.id);
+                        setSubfamiliaActiva(null);
+                      }}
+                      className={`flex flex-col items-center pt-5 px-2 gap-3 w-[124px] h-[148px] rounded-2xl border transition-all duration-200 snap-start ${
+                        isActive
+                          ? "border-primary/40 bg-gradient-to-b from-primary/10 to-primary/5 shadow-lg shadow-primary/10 -translate-y-0.5"
+                          : "border-border/70 bg-card hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
+                      }`}
+                    >
+                      <div
+                        className={`w-16 h-16 rounded-full overflow-hidden flex items-center justify-center ring-2 transition-all ${
+                          isActive
+                            ? "ring-primary/30 bg-primary/10"
+                            : "ring-transparent bg-muted"
+                        }`}
+                      >
+                        {familia.imagen ? (
+                          <img
+                            src={familia.imagen}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Wrench className="w-6 h-6 text-muted-foreground" />
+                        )}
+                      </div>
+
+                      <span
+                        className={`text-xs font-heading font-bold text-center leading-tight line-clamp-2 h-7 flex items-center justify-center ${
+                          isActive ? "text-primary" : "text-foreground"
+                        }`}
+                      >
+                        {familia.nombre}
+                      </span>
+
+                      {isActive && (
+                        <span className="absolute -bottom-px left-1/2 -translate-x-1/2 w-7 h-0.5 rounded-full bg-primary" />
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => scrollByAmount(280)}
+              aria-label="Desplazar a la derecha"
+              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card border border-border shadow-md items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {openFamiliaId !== null && menuPos && (() => {
+              const familiaAbierta = familias.find((f) => f.id === openFamiliaId);
+              const subsAbiertas = subfamilias.filter(
+                (s) => s.familia_id === openFamiliaId
               );
+
+              if (!familiaAbierta || subsAbiertas.length === 0) return null;
 
               return (
                 <div
-                  key={familia.id}
-                  className="relative group"
+                  onMouseEnter={cancelCloseSubmenu}
+                  onMouseLeave={scheduleCloseSubmenu}
+                  style={{
+                    position: "fixed",
+                    top: menuPos.top,
+                    left: menuPos.left,
+                    transform: "translateX(-50%)",
+                  }}
+                  className="min-w-[220px] bg-white rounded-2xl border border-border shadow-2xl z-50 overflow-hidden py-1.5"
                 >
-                  <button
-                    onClick={() => {
-                      setFamiliaActiva(familia.id);
-                      setSubfamiliaActiva(null);
-                    }}
-                    className={`font-heading text-xs font-bold px-4 py-2 rounded-full transition-all ${
-                      familiaActiva === familia.id
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "bg-card text-muted-foreground border border-border hover:border-primary/30 hover:text-foreground"
-                    }`}
-                  >
-                    {familia.nombre}
-                  </button>
-
-                  {subs.length > 0 && (
-                    <div className="absolute top-full left-0 min-w-[240px] bg-white rounded-xl border shadow-xl z-50 hidden group-hover:block">
-
-                      {subs.map((sub) => (
-                        <button
-                          key={sub.id}
-                          onClick={() => {
-                            setFamiliaActiva(familia.id);
-                            setSubfamiliaActiva(sub.id);
-                          }}
-                          className={`block w-full text-left px-4 py-3 text-sm hover:bg-slate-100 transition ${
-                            subfamiliaActiva === sub.id
-                              ? "bg-blue-50 text-primary font-semibold"
-                              : ""
-                          }`}
-                        >
-                          {sub.nombre}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  {subsAbiertas.map((sub) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => {
+                        setFamiliaActiva(familiaAbierta.id);
+                        setSubfamiliaActiva(sub.id);
+                        setOpenFamiliaId(null);
+                      }}
+                      className={`block w-full text-left px-4 py-2.5 text-sm rounded-lg mx-1.5 my-0.5 transition-colors ${
+                        subfamiliaActiva === sub.id
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {sub.nombre}
+                    </button>
+                  ))}
                 </div>
               );
-            })}
+            })()}
           </div>
 
           {filteredProductos.length > 0 ? (

@@ -35,13 +35,13 @@ const Login = () => {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
       {/* Brand panel */}
-      <div className="hidden lg:flex flex-col justify-between p-10 bg-foreground text-background relative overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-between p-20 bg-foreground text-background relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_hsl(var(--secondary))_0%,_transparent_60%)]" />
         <div className="relative flex items-center gap-3">
-          <img src={logo} alt="Repuestos El Turco" className="h-12 w-12 rounded-full border-2 border-secondary/40" />
+          <img src={logo} alt="Repuestos El Turco" className="h-64 w-64 rounded-full border-2 border-secondary/40" />
           <div className="leading-tight">
-            <p className="font-heading font-black text-xs text-background/60">REPUESTOS</p>
-            <p className="font-heading font-black text-secondary text-xl">EL TURCO</p>
+            <p className="font-heading font-black text-3xl text-background/60">REPUESTOS</p>
+            <p className="font-heading font-black text-secondary text-6xl">EL TURCO</p>
           </div>
         </div>
         <div className="relative space-y-4">
@@ -125,10 +125,6 @@ const Login = () => {
             </Button>
           </div>
 
-          <div className="text-xs text-muted-foreground bg-muted/50 border border-border rounded-md p-3 leading-relaxed">
-            <p className="font-bold text-foreground mb-1">Credenciales demo</p>
-            Usuario: <code className="font-mono">admin</code> · Contraseña: <code className="font-mono">turco2026</code>
-          </div>
         </form>
       </div>
     </div>
