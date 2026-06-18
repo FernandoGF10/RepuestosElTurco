@@ -35,67 +35,94 @@ const Nosotros = () => {
           </div>
         </section>
 
-        {/* Historia con imagen de fondo */}
-        <section className="relative py-16">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('/img/local-turco.jpeg')" }}
-          />
-          <div className="absolute inset-0 bg-white/80" />
-          <div className="relative container max-w-3xl space-y-0 z-10">
-          <div className="mb-8">
-            <h2 className="font-heading font-black text-2xl text-foreground">Nuestro camino</h2>
-          </div>
+        {/* Historia en cards */}
+        <section className="py-16 bg-background">
+          <div className="container max-w-4xl">
+            <div className="mb-10">
+              <h2 className="font-heading font-black text-2xl text-foreground">Nuestro camino</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-          {/* 2014 */}
-          <div className="flex gap-6">
-            <div className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                <Store className="w-5 h-5 text-secondary-foreground" />
+              {/* Card 2014 */}
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+                <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+                  <Store className="w-5 h-5 text-secondary-foreground" />
+                </div>
+                <div className="space-y-2">
+                  <span className="text-xs font-heading font-bold text-secondary uppercase tracking-widest">2014 — Los comienzos</span>
+                  <h3 className="font-heading font-bold text-lg text-foreground">Fundación de la empresa</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Esta empresa fue creada el año 2014 con el objetivo de acercar los repuestos automotrices a la comunidad.
+                  </p>
+                </div>
               </div>
-              <div className="w-0.5 flex-1 bg-border mt-3" />
-            </div>
-            <div className="pb-10 space-y-3">
-              <span className="text-xs font-heading font-bold text-secondary uppercase tracking-widest">2014 — Los comienzos</span>
-              <h3 className="font-heading font-bold text-xl text-foreground">Fundación de la empresa</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Esta Empresa Fue Creada el año 2014
-              </p>
-            </div>
-          </div>
 
-          {/* Primer local */}
-          <div className="flex gap-6">
-            <div className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0">
-                <MapPin className="w-5 h-5 text-primary-foreground" />
+              {/* Card Primer local */}
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+                <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                  <MapPin className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div className="space-y-2">
+                  <span className="text-xs font-heading font-bold text-primary uppercase tracking-widest">Primer local</span>
+                  <h3 className="font-heading font-bold text-lg text-foreground">Sirviendo a la comunidad</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Empezamos en un local pequeño para satisfacer a los clientes de Maipú, Cerrillos, Padre Hurtado y alrededores, que necesitaban repuestos de la línea francesa sin ir a Santiago.
+                  </p>
+                </div>
               </div>
-              <div className="w-0.5 flex-1 bg-border mt-3" />
-            </div>
-            <div className="pb-10 space-y-3">
-              <span className="text-xs font-heading font-bold text-primary uppercase tracking-widest">Primer local</span>
-              <h3 className="font-heading font-bold text-xl text-foreground">Sirviendo a la comunidad</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Empezamos en un local pequeño para poder satisfacer a los clientes en la comuna de Maipú, Cerrillos, Padre Hurtado y alrededores, los cuales necesitaban repuestos automotrices de la línea francesa y no tenían que ir a Santiago a buscarlos.
-              </p>
-            </div>
-          </div>
 
-          {/* Crecimiento */}
-          <div className="flex gap-6">
-            <div className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                <Users className="w-5 h-5 text-secondary-foreground" />
+              {/* Card Crecimiento */}
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+                <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+                  <Users className="w-5 h-5 text-secondary-foreground" />
+                </div>
+                <div className="space-y-2">
+                  <span className="text-xs font-heading font-bold text-secondary uppercase tracking-widest">Crecimiento</span>
+                  <h3 className="font-heading font-bold text-lg text-foreground">Nueva sucursal</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Con el tiempo sumamos más vendedores especializados y abrimos una segunda sucursal en la misma comuna de Maipú para brindar una mejor atención.
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="space-y-3">
-              <span className="text-xs font-heading font-bold text-secondary uppercase tracking-widest">Crecimiento</span>
-              <h3 className="font-heading font-bold text-xl text-foreground">Nueva sucursal</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                En el transcurso de los años necesitábamos más vendedores especializados en la marca y brindarles mejor atención a los clientes, por eso hemos abierto una sucursal en la misma comuna de Maipú.
-              </p>
+
             </div>
           </div>
+        </section>
+
+        {/* Collage de fotos */}
+        <section className="py-16 bg-muted/30">
+          <div className="container max-w-5xl">
+            <div className="text-center mb-10 space-y-2">
+              <span className="inline-block bg-secondary/20 text-secondary text-xs font-heading font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+                Galería
+              </span>
+              <h2 className="font-heading font-black text-3xl text-foreground">Así somos nosotros</h2>
+              <p className="text-muted-foreground text-sm">El equipo, el local y el día a día de Repuestos El Turco.</p>
+            </div>
+
+            {/* Collage grid */}
+            <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[700px]">
+              {/* Foto grande izquierda — ocupa 2 columnas y 2 filas */}
+              <div className="col-span-2 row-span-2 overflow-hidden rounded-2xl shadow-md">
+                <img src="/img/turco-1.jpeg" alt="Repuestos El Turco" className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-500" />
+              </div>
+              {/* Foto top center */}
+              <div className="overflow-hidden rounded-2xl shadow-md">
+                <img src="/img/turco-2.jpeg" alt="Repuestos El Turco" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              </div>
+              {/* Foto top right */}
+              <div className="overflow-hidden rounded-2xl shadow-md">
+                <img src="/img/turco-3.jpeg" alt="Repuestos El Turco" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              </div>
+              {/* Foto bottom center */}
+              <div className="overflow-hidden rounded-2xl shadow-md">
+                <img src="/img/turco-4.jpeg" alt="Repuestos El Turco" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              </div>
+              {/* Foto bottom right */}
+              <div className="overflow-hidden rounded-2xl shadow-md">
+                <img src="/img/turco-5.jpeg" alt="Repuestos El Turco" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              </div>
+            </div>
           </div>
         </section>
 
