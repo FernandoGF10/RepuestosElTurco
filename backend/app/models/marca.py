@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from datetime import datetime, timezone
 from app.core.database import Base
 
 class Marca(Base):
@@ -8,3 +9,4 @@ class Marca(Base):
     nombre = Column(String(100), nullable=False)
     logo = Column(String(255))
     activa = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
