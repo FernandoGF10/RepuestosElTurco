@@ -1,9 +1,10 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class FamiliaCreate(BaseModel):
     nombre: str
-    imagen: str
+    imagen: Optional[str] = None
 
 
 class FamiliaResponse(FamiliaCreate):
