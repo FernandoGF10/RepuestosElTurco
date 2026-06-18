@@ -40,20 +40,22 @@ const AdminLayout = () => {
       <aside
         className={`${
           open ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 fixed md:static inset-y-0 left-0 z-40 w-64 bg-foreground text-background flex flex-col transition-transform`}
+        } md:translate-x-0 fixed md:static inset-y-0 left-0 z-40 w-64 bg-foreground flex flex-col transition-transform`}
       >
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-background/10">
-          <img src={logo} alt="" className="h-10 w-10 rounded-full border border-background/20" />
-          <div className="leading-tight">
-            <p className="font-heading font-black text-xs text-background/60">PANEL ADMIN</p>
-            <p className="font-heading font-black text-secondary text-sm">EL TURCO</p>
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-5 h-16 border-b border-white/10">
+          <img src={logo} alt="" className="h-9 w-9 rounded-full ring-2 ring-secondary/40" />
+          <div className="leading-none">
+            <p className="font-heading font-black text-[10px] tracking-widest text-white/40 uppercase">Panel Admin</p>
+            <p className="font-heading font-black text-secondary text-base leading-tight">El Turco</p>
           </div>
-          <button className="ml-auto md:hidden p-1" onClick={() => setOpen(false)} aria-label="Cerrar menú">
+          <button className="ml-auto md:hidden p-1 text-white/60 hover:text-white" onClick={() => setOpen(false)}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -61,52 +63,65 @@ const AdminLayout = () => {
               end={item.end}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-md font-heading text-sm font-bold transition-colors ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl font-heading text-sm font-bold transition-all ${
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-background/70 hover:bg-background/10 hover:text-background"
+                    ? "bg-primary text-white shadow-md shadow-primary/30"
+                    : "text-white/60 hover:bg-white/8 hover:text-white"
                 }`
               }
             >
-              <item.icon className="w-4 h-4" />
-              {item.label}
+              {({ isActive }) => (
+                <>
+                  <item.icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-white/50"}`} />
+                  {item.label}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="p-3 border-t border-background/10 space-y-1">
+        {/* Footer */}
+        <div className="px-3 pb-4 space-y-0.5 border-t border-white/10 pt-3">
           <Link
             to="/"
             target="_blank"
-            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-background/70 hover:bg-background/10 hover:text-background transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-heading font-bold text-white/50 hover:bg-white/8 hover:text-white transition-all"
           >
-            <ExternalLink className="w-4 h-4" /> Ver sitio público
+            <ExternalLink className="w-4 h-4 shrink-0" />
+            Ver sitio público
           </Link>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-background/70 hover:bg-destructive/20 hover:text-destructive transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-heading font-bold text-white/50 hover:bg-destructive/20 hover:text-destructive transition-all"
           >
-            <LogOut className="w-4 h-4" /> Cerrar sesión
+            <LogOut className="w-4 h-4 shrink-0" />
+            Cerrar sesión
           </button>
         </div>
       </aside>
 
       {open && (
-        <div className="md:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setOpen(false)} />
+        <div className="md:hidden fixed inset-0 bg-black/60 z-30" onClick={() => setOpen(false)} />
       )}
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-card border-b border-border h-14 flex items-center px-4 md:px-6 gap-3 sticky top-0 z-20">
-          <button className="md:hidden p-2 -ml-2" onClick={() => setOpen(true)} aria-label="Abrir menú">
+        {/* Header */}
+        <header className="bg-card border-b border-border h-16 flex items-center px-4 md:px-6 gap-4 sticky top-0 z-20">
+          <button className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => setOpen(true)}>
             <Menu className="w-5 h-5" />
           </button>
-          <h1 className="font-heading font-bold text-foreground">Panel de administración</h1>
-          <div className="ml-auto flex items-center gap-3 text-sm">
-            <span className="hidden sm:inline text-muted-foreground">
-              Hola, <strong className="text-foreground">{username}</strong>
+
+          <div className="hidden md:flex items-center gap-2">
+            <span className="w-1 h-5 rounded-full bg-secondary inline-block" />
+            <span className="font-heading font-black text-sm text-foreground">Panel de administración</span>
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden sm:inline text-sm text-muted-foreground">
+              Hola, <strong className="text-foreground font-heading">{username}</strong>
             </span>
-            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground font-heading font-bold flex items-center justify-center text-xs">
+            <div className="w-8 h-8 rounded-full bg-primary text-white font-heading font-black flex items-center justify-center text-xs shadow-sm">
               {username.substring(0, 1).toUpperCase()}
             </div>
           </div>

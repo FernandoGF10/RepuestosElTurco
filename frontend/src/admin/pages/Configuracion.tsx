@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Save } from "lucide-react";
+import { Save, Plus, Trash2, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
@@ -20,7 +20,8 @@ const DEFAULT_CONFIG: SiteConfig = {
 interface Marca {
   id: number;
   nombre: string;
-  logo: string;
+  logo: string | null;
+  activa: boolean;
 }
 
 const Configuracion = () => {
@@ -41,36 +42,24 @@ const Configuracion = () => {
   const cargarMarcas = async () => {
     try {
       const data = await api.marcas.list();
-      setMarcas(data);
+      setMarcas(data as Marca[]);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const set = <K extends keyof SiteConfig>(
-    k: K,
-    v: SiteConfig[K]
-  ) => setForm((f) => ({ ...f, [k]: v }));
+  const set = <K extends keyof SiteConfig>(k: K, v: SiteConfig[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const updated = await api.config.update(form);
-
       setForm(updated);
-
-      toast({
-        title: "Configuración guardada",
-        description: "Los datos del sitio se actualizaron.",
-      });
+      toast({ title: "Configuración guardada", description: "Los datos del sitio se actualizaron." });
     } catch (err) {
-      toast({
-        title: "Error al guardar",
-        description: String(err),
-        variant: "destructive",
-      });
+      toast({ title: "Error al guardar", description: String(err), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -78,254 +67,171 @@ const Configuracion = () => {
 
   const agregarMarca = async () => {
     if (!nuevaMarca.trim()) return;
-
     try {
-      const marca = await api.marcas.create({
-        nombre: nuevaMarca,
-        logo: nuevoLogo,
-      });
-
-      setMarcas((prev) => [...prev, marca]);
-
+      const marca = await api.marcas.create({ nombre: nuevaMarca, logo: nuevoLogo || null });
+      setMarcas((prev) => [...prev, marca as Marca]);
       setNuevaMarca("");
       setNuevoLogo("");
-
-      toast({
-        title: "Marca agregada",
-        description: `${marca.nombre} fue agregada correctamente`,
-      });
+      toast({ title: "Marca agregada", description: `${marca.nombre} fue agregada correctamente` });
     } catch (error) {
-      console.error(error);
-
-      toast({
-        title: "Error",
-        description: "No se pudo agregar la marca",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "No se pudo agregar la marca", variant: "destructive" });
     }
   };
 
   const eliminarMarca = async (id: number) => {
     try {
       await api.marcas.delete(id);
-
-      setMarcas((prev) =>
-        prev.filter((m) => m.id !== id)
-      );
-
-      toast({
-        title: "Marca eliminada",
-      });
+      setMarcas((prev) => prev.filter((m) => m.id !== id));
+      toast({ title: "Marca eliminada" });
     } catch (error) {
-      console.error(error);
-
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la marca",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "No se pudo eliminar la marca", variant: "destructive" });
     }
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
+      {/* Page title */}
       <div>
-        <h2 className="font-heading font-black text-2xl text-foreground">
-          Configuración del sitio
-        </h2>
-
-        <p className="text-sm text-muted-foreground">
-          Información del negocio que se muestra en el sitio público
-          (header, footer y contacto).
-        </p>
+        <h2 className="font-heading font-black text-2xl text-foreground">Configuración</h2>
+        <p className="text-sm text-muted-foreground">Información del negocio y marcas que se muestran en el sitio.</p>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-card border border-border rounded-lg p-6 space-y-5"
-      >
-        <div>
-          <label className="text-sm font-medium">
-            Nombre del negocio
-          </label>
+      {/* Side-by-side layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
 
-          <Input
-            value={form.nombreNegocio}
-            onChange={(e) =>
-              set("nombreNegocio", e.target.value)
-            }
-          />
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium">
-              Teléfono principal
-            </label>
-
-            <Input
-              value={form.telefono1}
-              onChange={(e) =>
-                set("telefono1", e.target.value)
-              }
-            />
+        {/* ── Config form (2 cols) ── */}
+        <div className="xl:col-span-2 bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-border">
+            <h3 className="font-heading font-black text-base text-foreground">Datos del negocio</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Se muestran en header, footer y página de contacto.</p>
           </div>
 
-          <div>
-            <label className="text-sm font-medium">
-              Teléfono secundario
-            </label>
+          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <div>
+              <label className="text-sm font-heading font-bold text-foreground mb-1.5 block">Nombre del negocio</label>
+              <Input value={form.nombreNegocio} onChange={(e) => set("nombreNegocio", e.target.value)} />
+            </div>
 
-            <Input
-              value={form.telefono2}
-              onChange={(e) =>
-                set("telefono2", e.target.value)
-              }
-            />
-          </div>
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium">
-              WhatsApp
-            </label>
-
-            <Input
-              value={form.whatsapp}
-              onChange={(e) =>
-                set("whatsapp", e.target.value)
-              }
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">
-              Email de contacto
-            </label>
-
-            <Input
-              type="email"
-              value={form.email}
-              onChange={(e) =>
-                set("email", e.target.value)
-              }
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">
-            Dirección
-          </label>
-
-          <Input
-            value={form.direccion}
-            onChange={(e) =>
-              set("direccion", e.target.value)
-            }
-          />
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium">
-              Ciudad / región
-            </label>
-
-            <Input
-              value={form.ciudad}
-              onChange={(e) =>
-                set("ciudad", e.target.value)
-              }
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">
-              Horario de atención
-            </label>
-
-            <Input
-              value={form.horario}
-              onChange={(e) =>
-                set("horario", e.target.value)
-              }
-            />
-          </div>
-        </div>
-
-        <Button
-          type="submit"
-          className="gap-2"
-          disabled={loading}
-        >
-          <Save className="w-4 h-4" />
-          {loading ? "Guardando..." : "Guardar cambios"}
-        </Button>
-
-        <hr />
-
-        <div className="space-y-4">
-          <h3 className="font-bold text-lg">
-            Marcas del negocio
-          </h3>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input
-              placeholder="Nombre marca"
-              value={nuevaMarca}
-              onChange={(e) =>
-                setNuevaMarca(e.target.value)
-              }
-            />
-
-            <Input
-              placeholder="URL del logo"
-              value={nuevoLogo}
-              onChange={(e) =>
-                setNuevoLogo(e.target.value)
-              }
-            />
-          </div>
-
-          <Button
-            type="button"
-            onClick={agregarMarca}
-          >
-            Agregar Marca
-          </Button>
-
-          <div className="space-y-2">
-            {marcas.map((marca) => (
-              <div
-                key={marca.id}
-                className="flex items-center justify-between border rounded-lg p-3"
-              >
-                <div>
-                  <p className="font-medium">
-                    {marca.nombre}
-                  </p>
-
-                  <p className="text-xs text-muted-foreground">
-                    {marca.logo}
-                  </p>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() =>
-                    eliminarMarca(marca.id)
-                  }
-                >
-                  Eliminar
-                </Button>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-heading font-bold text-foreground mb-1.5 block">Teléfono principal</label>
+                <Input value={form.telefono1} onChange={(e) => set("telefono1", e.target.value)} />
               </div>
-            ))}
+              <div>
+                <label className="text-sm font-heading font-bold text-foreground mb-1.5 block">Teléfono secundario</label>
+                <Input value={form.telefono2} onChange={(e) => set("telefono2", e.target.value)} />
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-heading font-bold text-foreground mb-1.5 block">WhatsApp</label>
+                <Input value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-heading font-bold text-foreground mb-1.5 block">Email de contacto</label>
+                <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-heading font-bold text-foreground mb-1.5 block">Dirección</label>
+              <Input value={form.direccion} onChange={(e) => set("direccion", e.target.value)} />
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-heading font-bold text-foreground mb-1.5 block">Ciudad / región</label>
+                <Input value={form.ciudad} onChange={(e) => set("ciudad", e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-heading font-bold text-foreground mb-1.5 block">Horario de atención</label>
+                <Input value={form.horario} onChange={(e) => set("horario", e.target.value)} />
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <Button type="submit" className="gap-2 font-heading font-bold" disabled={loading}>
+                <Save className="w-4 h-4" />
+                {loading ? "Guardando..." : "Guardar cambios"}
+              </Button>
+            </div>
+          </form>
+        </div>
+
+        {/* ── Marcas panel (1 col) ── */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-border">
+            <h3 className="font-heading font-black text-base text-foreground">Marcas</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Marcas de vehículos del catálogo.</p>
+          </div>
+
+          {/* Agregar nueva */}
+          <div className="px-6 py-4 border-b border-border space-y-3">
+            <Input
+              placeholder="Nombre de la marca"
+              value={nuevaMarca}
+              onChange={(e) => setNuevaMarca(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), agregarMarca())}
+            />
+            <Input
+              placeholder="Ruta del logo (ej: /logos/peugeot.png)"
+              value={nuevoLogo}
+              onChange={(e) => setNuevoLogo(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), agregarMarca())}
+            />
+            <Button
+              type="button"
+              onClick={agregarMarca}
+              className="w-full gap-2 font-heading font-bold"
+              disabled={!nuevaMarca.trim()}
+            >
+              <Plus className="w-4 h-4" />
+              Agregar marca
+            </Button>
+          </div>
+
+          {/* Lista de marcas */}
+          <div className="divide-y divide-border">
+            {marcas.length === 0 ? (
+              <div className="px-6 py-10 text-center">
+                <Tag className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No hay marcas registradas.</p>
+              </div>
+            ) : (
+              marcas.map((marca) => (
+                <div key={marca.id} className="flex items-center gap-3 px-6 py-3 hover:bg-muted/30 transition-colors">
+                  {marca.logo ? (
+                    <img
+                      src={marca.logo}
+                      alt={marca.nombre}
+                      className="w-9 h-9 object-contain rounded-lg bg-muted p-1 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <Tag className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-heading font-bold text-sm text-foreground truncate">{marca.nombre}</p>
+                    {marca.logo && (
+                      <p className="text-xs text-muted-foreground truncate">{marca.logo}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => eliminarMarca(marca.id)}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                    aria-label={`Eliminar ${marca.nombre}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
-      </form>
+
+      </div>
     </div>
   );
 };
