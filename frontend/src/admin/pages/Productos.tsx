@@ -22,42 +22,27 @@ const formatCLP = (n: number) =>
 
 const Productos = () => {
   const { toast } = useToast();
-  const [productos, setProductos] = useState<ProductoAdmin[]>([]);
-  const [search, setSearch] = useState("");
-  const [estado, setEstado] = useState<"todos" | "activo" | "inactivo">("todos");
-  const [editing, setEditing] = useState<ProductoAdmin | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [productos, setProductos]         = useState<ProductoAdmin[]>([]);
+  const [search, setSearch]               = useState("");
+  const [estado, setEstado]               = useState<"todos" | "activo" | "inactivo">("todos");
+  const [editing, setEditing]             = useState<ProductoAdmin | null>(null);
+  const [dialogOpen, setDialogOpen]       = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<ProductoAdmin | null>(null);
 
-  const cargar = () => {
-    api.productos.list({ solo_activos: false }).then(setProductos);
-  };
-
+  const cargar = () => { api.productos.list({ solo_activos: false }).then(setProductos); };
   useEffect(() => { cargar(); }, []);
 
   const filtered = useMemo(() => {
     const t = search.toLowerCase();
     return productos.filter((p) => {
-      const matchSearch =
-        !t ||
-        p.nombre.toLowerCase().includes(t) ||
-        p.codigo.toLowerCase().includes(t) ||
-        p.marca.toLowerCase().includes(t);
-      const matchEstado =
-        estado === "todos" || (estado === "activo" ? p.activo : !p.activo);
+      const matchSearch = !t || p.nombre.toLowerCase().includes(t) || p.codigo.toLowerCase().includes(t) || p.marca.toLowerCase().includes(t);
+      const matchEstado = estado === "todos" || (estado === "activo" ? p.activo : !p.activo);
       return matchSearch && matchEstado;
     });
   }, [productos, search, estado]);
 
-  const handleNew = () => {
-    setEditing(null);
-    setDialogOpen(true);
-  };
-
-  const handleEdit = (p: ProductoAdmin) => {
-    setEditing(p);
-    setDialogOpen(true);
-  };
+  const handleNew    = () => { setEditing(null); setDialogOpen(true); };
+  const handleEdit   = (p: ProductoAdmin) => { setEditing(p); setDialogOpen(true); };
 
   const handleToggle = async (p: ProductoAdmin) => {
     try {
@@ -86,11 +71,7 @@ const Productos = () => {
       setProductos((prev) => prev.filter((p) => p.id !== confirmDelete.id));
       toast({ title: "Producto eliminado", description: confirmDelete.nombre });
     } catch (err) {
-      toast({
-        title: "No se puede eliminar",
-        description: err instanceof Error ? err.message : String(err),
-        variant: "destructive",
-      });
+      toast({ title: "No se puede eliminar", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
     }
     setConfirmDelete(null);
   };
@@ -102,30 +83,31 @@ const Productos = () => {
           <h2 className="font-heading font-black text-2xl text-foreground">Gestión de productos</h2>
           <p className="text-sm text-muted-foreground">Crea, edita, controla stock y disponibilidad de tu catálogo.</p>
         </div>
-        <Button onClick={handleNew} className="gap-1.5">
+        <Button onClick={handleNew} className="gap-1.5 font-heading font-bold rounded-xl">
           <Plus className="w-4 h-4" /> Nuevo producto
         </Button>
       </div>
 
-      <div className="bg-card border border-border rounded-lg p-4 flex flex-wrap gap-3 items-center">
+      {/* Filtros */}
+      <div className="bg-card border border-border rounded-2xl p-4 flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar por nombre, código o marca..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 rounded-xl"
           />
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1.5">
           {(["todos", "activo", "inactivo"] as const).map((e) => (
             <button
               key={e}
               onClick={() => setEstado(e)}
-              className={`px-3 py-2 text-xs font-heading font-bold rounded-md uppercase tracking-wider transition-colors ${
+              className={`px-3 py-2 text-xs font-heading font-bold rounded-xl uppercase tracking-wider transition-all ${
                 estado === e
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-white shadow-sm"
+                  : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
               }`}
             >
               {e}
@@ -134,24 +116,25 @@ const Productos = () => {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
+      {/* Tabla */}
+      <div className="bg-card border border-border rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider">
+            <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="text-left font-heading font-bold py-3 px-4">Producto</th>
-                <th className="text-left font-heading font-bold py-3 px-4 hidden md:table-cell">Código</th>
-                <th className="text-left font-heading font-bold py-3 px-4 hidden lg:table-cell">Marca</th>
-                <th className="text-right font-heading font-bold py-3 px-4">Precio</th>
-                <th className="text-center font-heading font-bold py-3 px-4">Stock</th>
-                <th className="text-center font-heading font-bold py-3 px-4">Estado</th>
-                <th className="text-right font-heading font-bold py-3 px-4">Acciones</th>
+                <th className="text-left font-heading font-bold text-xs uppercase tracking-widest text-muted-foreground py-3 px-4">Producto</th>
+                <th className="text-left font-heading font-bold text-xs uppercase tracking-widest text-muted-foreground py-3 px-4 hidden md:table-cell">Código</th>
+                <th className="text-left font-heading font-bold text-xs uppercase tracking-widest text-muted-foreground py-3 px-4 hidden lg:table-cell">Marca</th>
+                <th className="text-right font-heading font-bold text-xs uppercase tracking-widest text-muted-foreground py-3 px-4">Precio</th>
+                <th className="text-center font-heading font-bold text-xs uppercase tracking-widest text-muted-foreground py-3 px-4">Stock</th>
+                <th className="text-center font-heading font-bold text-xs uppercase tracking-widest text-muted-foreground py-3 px-4">Estado</th>
+                <th className="text-right font-heading font-bold text-xs uppercase tracking-widest text-muted-foreground py-3 px-4">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="py-14 text-center text-muted-foreground font-heading font-bold">
                     No hay productos que coincidan.
                   </td>
                 </tr>
@@ -174,27 +157,24 @@ const Productos = () => {
 
       <ProductoFormDialog
         open={dialogOpen}
-        onOpenChange={(o) => {
-          setDialogOpen(o);
-          if (!o) cargar();
-        }}
+        onOpenChange={(o) => { setDialogOpen(o); if (!o) cargar(); }}
         producto={editing}
       />
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogTitle className="font-heading font-black">¿Eliminar producto?</AlertDialogTitle>
             <AlertDialogDescription>
               Vas a eliminar <strong>{confirmDelete?.nombre}</strong>. Esta acción no se puede deshacer.
               Si el producto está asociado a pedidos, no podrá eliminarse y deberás desactivarlo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="font-heading font-bold rounded-xl">Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-white font-heading font-bold rounded-xl hover:bg-destructive/90"
             >
               Eliminar
             </AlertDialogAction>
@@ -215,22 +195,21 @@ interface RowProps {
 
 const ProductoRow = ({ producto: p, onEdit, onToggle, onDelete, onStockBlur }: RowProps) => {
   const [localStock, setLocalStock] = useState(p.stock);
-
   useEffect(() => { setLocalStock(p.stock); }, [p.stock]);
 
   return (
     <tr className="hover:bg-muted/30 transition-colors">
       <td className="py-3 px-4">
         <div className="flex items-center gap-3 min-w-0">
-          <img src={p.imagen} alt="" className="w-10 h-10 rounded object-contain bg-muted shrink-0" />
+          <img src={p.imagen} alt="" className="w-10 h-10 rounded-xl object-contain bg-muted shrink-0 p-0.5" />
           <div className="min-w-0">
             <p className="font-heading font-bold text-foreground truncate">{p.nombre}</p>
-            <p className="text-xs text-muted-foreground">{p.categoria}</p>
+            <p className="text-xs text-muted-foreground">{p.marca}</p>
           </div>
         </div>
       </td>
-      <td className="py-3 px-4 font-mono text-xs hidden md:table-cell">{p.codigo}</td>
-      <td className="py-3 px-4 hidden lg:table-cell">{p.marca}</td>
+      <td className="py-3 px-4 font-mono text-xs hidden md:table-cell text-muted-foreground">{p.codigo}</td>
+      <td className="py-3 px-4 hidden lg:table-cell text-sm">{p.marca}</td>
       <td className="py-3 px-4 text-right font-heading font-bold">{formatCLP(p.precio)}</td>
       <td className="py-3 px-4">
         <input
@@ -239,7 +218,7 @@ const ProductoRow = ({ producto: p, onEdit, onToggle, onDelete, onStockBlur }: R
           value={localStock}
           onChange={(e) => setLocalStock(parseInt(e.target.value || "0", 10))}
           onBlur={() => onStockBlur(p, localStock)}
-          className={`w-16 mx-auto block text-center font-bold rounded-md border px-2 py-1 text-sm ${
+          className={`w-16 mx-auto block text-center font-heading font-bold rounded-xl border px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 ${
             localStock === 0
               ? "border-destructive/30 bg-destructive/5 text-destructive"
               : localStock <= 3
@@ -249,11 +228,9 @@ const ProductoRow = ({ producto: p, onEdit, onToggle, onDelete, onStockBlur }: R
         />
       </td>
       <td className="py-3 px-4 text-center">
-        <span
-          className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
-            p.activo ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
-          }`}
-        >
+        <span className={`inline-flex items-center gap-1.5 text-[11px] font-heading font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+          p.activo ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
+        }`}>
           <span className={`w-1.5 h-1.5 rounded-full ${p.activo ? "bg-emerald-500" : "bg-muted-foreground"}`} />
           {p.activo ? "Activo" : "Inactivo"}
         </span>
@@ -263,21 +240,21 @@ const ProductoRow = ({ producto: p, onEdit, onToggle, onDelete, onStockBlur }: R
           <button
             onClick={() => onToggle(p)}
             title={p.activo ? "Desactivar" : "Activar"}
-            className="p-2 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+            className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
           >
             <Power className="w-4 h-4" />
           </button>
           <button
             onClick={() => onEdit(p)}
             title="Editar"
-            className="p-2 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+            className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
           >
             <Edit2 className="w-4 h-4" />
           </button>
           <button
             onClick={() => onDelete(p)}
             title="Eliminar"
-            className="p-2 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+            className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
           >
             <Trash2 className="w-4 h-4" />
           </button>
