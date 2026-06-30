@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
-import logo from "@/assets/logo-el-turco.png";
+import logo from "../../public/img/logo-el-turco.png";
 
 const AdminLayout = () => {
   const navigate = useNavigate();

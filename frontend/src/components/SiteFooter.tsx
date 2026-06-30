@@ -3,7 +3,7 @@ import {
   Disc, Settings, ArrowUpDown, Navigation, Filter, Thermometer, Zap, Shield, MessageCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import logo from "@/assets/logo-el-turco.png";
+import logo from "../../public/img/logo-el-turco.png";
 
 const categoriaIcons: Record<string, React.ReactNode> = {
   "Frenos":          <Disc className="w-4 h-4" />,

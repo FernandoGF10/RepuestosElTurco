@@ -1,6 +1,6 @@
 import { useLocation, useParams, Link } from "react-router-dom";
 import { CheckCircle2, Package, Store, ArrowRight } from "lucide-react";
-import logo from "@/assets/logo-el-turco.png";
+import logo from "../../public/img/logo-el-turco.png";
 import type { Pedido } from "@/types/admin";
 
 const formatCLP = (n: number) =>
