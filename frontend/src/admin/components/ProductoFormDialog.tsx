@@ -86,9 +86,13 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
         const { id, ...rest } = producto;
         setForm(rest);
         setCompatText(producto.compatibilidad.map((c) => `${c.auto} | ${c.anios}`).join("\n"));
+        setFamiliaSeleccionada(producto.familia_id ?? null);
+        setSubfamiliaSeleccionada(producto.subfamilia_id ?? null);
       } else {
         setForm(empty);
         setCompatText("");
+        setFamiliaSeleccionada(null);
+        setSubfamiliaSeleccionada(null);
       }
       setErrors({});
     }
@@ -104,6 +108,8 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
     if (form.imagen && !/^(https?:|data:|\/|blob:)/.test(form.imagen)) {
       e.imagen = "Debe ser una URL válida (https://...).";
     }
+    if (!familiaSeleccionada) e.familia_id = "Debe seleccionar una familia.";
+    if (!subfamiliaSeleccionada) e.subfamilia_id = "Debe seleccionar una subfamilia.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -125,6 +131,7 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
     try {
       const data: FormData = {
         ...form,
+        familia_id: familiaSeleccionada,
         subfamilia_id: subfamiliaSeleccionada,
         imagen: form.imagen || "/placeholder.svg",
         compatibilidad: parseCompat(),
@@ -204,6 +211,7 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
                     </option>
                 ))}
               </select>
+              {errors.familia_id && <p className="text-xs text-destructive mt-1">{errors.familia_id}</p>}
             </div>
 
             <div>
@@ -226,6 +234,7 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
                         </option>
                     ))}
               </select>
+              {errors.subfamilia_id && <p className="text-xs text-destructive mt-1">{errors.subfamilia_id}</p>}
             </div>
             <div>
               <label className="text-sm font-medium">Precio (CLP) *</label>
