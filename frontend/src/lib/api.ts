@@ -80,7 +80,7 @@ export interface UsuarioOut {
   creado_en: string;
 }
 
-// ─── Raw API types (snake_case from backend) ─────────────────────────────────
+// ─── Raw API types ───────────────────────────────────────────────────────────
 interface RawProducto {
   id: string;
   codigo: string;
@@ -228,11 +228,14 @@ export const api = {
       solo_activos?: boolean;
     }): Promise<ProductoAdmin[]> => {
       const q = new URLSearchParams();
-      if (params?.categoria && params.categoria !== "Todos")
+      if (params?.categoria && params.categoria !== "Todos") {
         q.set("categoria", params.categoria);
+      }
       if (params?.buscar) q.set("buscar", params.buscar);
-      if (params?.solo_activos !== undefined)
+      if (params?.solo_activos !== undefined) {
         q.set("solo_activos", String(params.solo_activos));
+      }
+
       const raw = await request<RawProducto[]>(`/api/productos?${q}`);
       return raw.map(toProducto);
     },
@@ -251,8 +254,15 @@ export const api = {
       return toProducto(raw);
     },
 
-    update: async (id: string, data: Partial<Omit<ProductoAdmin, "id">>): Promise<ProductoAdmin> => {
-      const body = { ...data, ...(data.imagen !== undefined ? { imagen_url: data.imagen } : {}) };
+    update: async (
+      id: string,
+      data: Partial<Omit<ProductoAdmin, "id">>
+    ): Promise<ProductoAdmin> => {
+      const body = {
+        ...data,
+        ...(data.imagen !== undefined ? { imagen_url: data.imagen } : {}),
+      };
+
       const raw = await request<RawProducto>(`/api/productos/${id}`, {
         method: "PUT",
         body: JSON.stringify(body),
@@ -276,7 +286,9 @@ export const api = {
     },
 
     delete: (id: string) =>
-      request<void>(`/api/productos/${id}`, { method: "DELETE" }),
+      request<void>(`/api/productos/${id}`, {
+        method: "DELETE",
+      }),
   },
 
   pedidos: {
@@ -287,6 +299,7 @@ export const api = {
       const q = new URLSearchParams();
       if (params?.estado) q.set("estado", params.estado);
       if (params?.buscar) q.set("buscar", params.buscar);
+
       const raw = await request<RawPedido[]>(`/api/pedidos?${q}`);
       return raw.map(toPedido);
     },
@@ -311,7 +324,10 @@ export const api = {
       return toPedido(raw);
     },
 
-    updateEstado: async (id: string, estado: Pedido["estado"]): Promise<Pedido> => {
+    updateEstado: async (
+      id: string,
+      estado: Pedido["estado"]
+    ): Promise<Pedido> => {
       const raw = await request<RawPedido>(`/api/pedidos/${id}/estado`, {
         method: "PATCH",
         body: JSON.stringify({ estado }),
@@ -321,12 +337,15 @@ export const api = {
   },
 
   pagos: {
-    publicKey: (): Promise<{ public_key: string }> => request("/api/pagos/public-key"),
+    publicKey: (): Promise<{ public_key: string }> =>
+      request("/api/pagos/public-key"),
 
     crearPreferencia: (
       pedidoId: string
     ): Promise<{ preference_id: string; init_point: string; public_key: string }> =>
-      request(`/api/pagos/preferencia/${pedidoId}`, { method: "POST" }),
+      request(`/api/pagos/preferencia/${pedidoId}`, {
+        method: "POST",
+      }),
 
     procesar: (
       pedidoId: string,
@@ -361,6 +380,7 @@ export const api = {
       const q = new URLSearchParams();
       if (params.paymentId) q.set("payment_id", params.paymentId);
       if (params.pedidoId) q.set("pedido_id", params.pedidoId);
+
       return request(`/api/pagos/verificar?${q}`);
     },
   },
@@ -368,6 +388,7 @@ export const api = {
   clientes: {
     list: async (buscar?: string) => {
       const q = buscar ? `?buscar=${encodeURIComponent(buscar)}` : "";
+
       return request<{
         nombre: string;
         telefono: string;
@@ -401,6 +422,7 @@ export const api = {
       const raw = await request<RawConfig>("/api/config");
       return toConfig(raw);
     },
+
     update: async (data: SiteConfig): Promise<SiteConfig> => {
       const raw = await request<RawConfig>("/api/config", {
         method: "PUT",
@@ -412,110 +434,155 @@ export const api = {
 
   marcas: {
     list: () =>
-        request<{ id: number; nombre: string; logo: string }[]>(
-            "/api/marcas/"
-        ),
+      request<{ id: number; nombre: string; logo: string }[]>("/api/marcas/"),
 
     create: (data: { nombre: string; logo: string }) =>
-        request<{ id: number; nombre: string; logo: string }>(
-            "/api/marcas/",
-            {
-              method: "POST",
-              body: JSON.stringify(data),
-            }
-        ),
+      request<{ id: number; nombre: string; logo: string }>("/api/marcas/", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
 
     delete: (id: number) =>
-        request<void>(
-            `/api/marcas/${id}`,
-            {
-              method: "DELETE",
-            }
-        ),
+      request<void>(`/api/marcas/${id}`, {
+        method: "DELETE",
+      }),
   },
 
   marcasPublic: {
     list: () =>
-        request<{ id: number; nombre: string; logo: string }[]>(
-            "/api/marcas/"
-        ),
+      request<{ id: number; nombre: string; logo: string }[]>("/api/marcas/"),
   },
 
   familias: {
-  list: () =>
-    request<{ id: number; nombre: string; imagen?: string }[]>("/api/familias/"),
+    list: () =>
+      request<{ id: number; nombre: string; imagen?: string; posicion: number }[]>(
+        "/api/familias/"
+      ),
 
-  create: (data: { nombre: string; imagen?: string }) =>
-    request<{ id: number; nombre: string; imagen?: string }>("/api/familias/", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+    create: (data: { nombre: string; imagen?: string; posicion?: number }) =>
+      request<{ id: number; nombre: string; imagen?: string; posicion: number }>(
+        "/api/familias/",
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        }
+      ),
 
-  update: (id: number, data: { nombre?: string; imagen?: string }) =>
-    request<{ id: number; nombre: string; imagen?: string }>(`/api/familias/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
+    update: (
+      id: number,
+      data: { nombre?: string; imagen?: string; posicion?: number }
+    ) =>
+      request<{ id: number; nombre: string; imagen?: string; posicion: number }>(
+        `/api/familias/${id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(data),
+        }
+      ),
 
-  delete: (id: number) =>
-    request<void>(`/api/familias/${id}`, {
-      method: "DELETE",
-    }),
-},
+    ordenar: (orden: { id: number; posicion: number }[]) =>
+      request<{ id: number; nombre: string; imagen?: string; posicion: number }[]>(
+        "/api/familias/orden",
+        {
+          method: "PATCH",
+          body: JSON.stringify(orden),
+        }
+      ),
 
-subfamilias: {
-  list: () =>
-    request<{ id: number; nombre: string; familia_id: number }[]>("/api/subfamilias/"),
+    delete: (id: number) =>
+      request<void>(`/api/familias/${id}`, {
+        method: "DELETE",
+      }),
+  },
 
-  create: (data: { nombre: string; familia_id: number }) =>
-    request<{ id: number; nombre: string; familia_id: number }>("/api/subfamilias/", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+  subfamilias: {
+    list: () =>
+      request<{ id: number; nombre: string; familia_id: number }[]>(
+        "/api/subfamilias/"
+      ),
 
-  update: (id: number, data: { nombre?: string; familia_id?: number }) =>
-    request<{ id: number; nombre: string; familia_id: number }>(`/api/subfamilias/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
+    create: (data: { nombre: string; familia_id: number }) =>
+      request<{ id: number; nombre: string; familia_id: number }>(
+        "/api/subfamilias/",
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        }
+      ),
 
-  delete: (id: number) =>
-    request<void>(`/api/subfamilias/${id}`, {
-      method: "DELETE",
-    }),
-},
+    update: (id: number, data: { nombre?: string; familia_id?: number }) =>
+      request<{ id: number; nombre: string; familia_id: number }>(
+        `/api/subfamilias/${id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(data),
+        }
+      ),
+
+    delete: (id: number) =>
+      request<void>(`/api/subfamilias/${id}`, {
+        method: "DELETE",
+      }),
+  },
 
   vehiculos: {
-  marcas: () =>
-    request<{ id: number; nombre: string; logo?: string; activa?: boolean }[]>(
-      "/api/vehiculos/marcas"
-    ),
+    marcas: () =>
+      request<{ id: number; nombre: string; logo?: string; activa?: boolean }[]>(
+        "/api/vehiculos/marcas"
+      ),
 
-  modelos: (marcaId?: number) => {
-    const q = marcaId ? `?marca_id=${marcaId}` : "";
-    return request<
-      { id: number; marca_id: number; nombre: string; activo: boolean; marca_nombre?: string }[]
-    >(`/api/vehiculos/modelos${q}`);
-  },
+    modelos: (marcaId?: number) => {
+      const q = marcaId ? `?marca_id=${marcaId}` : "";
 
-  motores: (modeloId?: number) => {
-    const q = modeloId ? `?modelo_id=${modeloId}` : "";
-    return request<
-      { id: number; modelo_id: number; nombre: string; activo: boolean; modelo_nombre?: string }[]
-    >(`/api/vehiculos/motores${q}`);
+      return request<
+        {
+          id: number;
+          marca_id: number;
+          nombre: string;
+          activo: boolean;
+          marca_nombre?: string;
+        }[]
+      >(`/api/vehiculos/modelos${q}`);
+    },
+
+    motores: (modeloId?: number) => {
+      const q = modeloId ? `?modelo_id=${modeloId}` : "";
+
+      return request<
+        {
+          id: number;
+          modelo_id: number;
+          nombre: string;
+          activo: boolean;
+          modelo_nombre?: string;
+        }[]
+      >(`/api/vehiculos/motores${q}`);
+    },
   },
-},
 
   usuarios: {
     list: () => request<UsuarioOut[]>("/api/usuarios"),
+
     create: (data: { username: string; password: string; rol: string }) =>
-      request<UsuarioOut>("/api/usuarios", { method: "POST", body: JSON.stringify({ ...data, activo: true }) }),
-    update: (id: string, data: { username?: string; password?: string; rol?: string; activo?: boolean }) =>
-      request<UsuarioOut>(`/api/usuarios/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-    delete: (id: string) => request<void>(`/api/usuarios/${id}`, { method: "DELETE" }),
+      request<UsuarioOut>("/api/usuarios", {
+        method: "POST",
+        body: JSON.stringify({ ...data, activo: true }),
+      }),
+
+    update: (
+      id: string,
+      data: { username?: string; password?: string; rol?: string; activo?: boolean }
+    ) =>
+      request<UsuarioOut>(`/api/usuarios/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+
+    delete: (id: string) =>
+      request<void>(`/api/usuarios/${id}`, {
+        method: "DELETE",
+      }),
   },
 
   token,
 };
-
-

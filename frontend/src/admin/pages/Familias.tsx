@@ -1,8 +1,12 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { DragEvent, FormEvent } from "react";
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
   Edit2,
   FolderTree,
+  GripVertical,
   ImageIcon,
   Plus,
   Search,
@@ -35,6 +39,7 @@ interface Familia {
   id: number;
   nombre: string;
   imagen?: string;
+  posicion: number;
 }
 
 interface Subfamilia {
@@ -85,6 +90,12 @@ const Familias = () => {
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const [draggedFamiliaId, setDraggedFamiliaId] = useState<number | null>(null);
+  const [dragOverFamiliaId, setDragOverFamiliaId] = useState<number | null>(
+    null
+  );
+  const [ordenando, setOrdenando] = useState(false);
+
   const cargar = async () => {
     try {
       const [familiasData, subfamiliasData] = await Promise.all([
@@ -124,6 +135,136 @@ const Familias = () => {
 
   const getFamiliaNombre = (familiaId: number) => {
     return familias.find((f) => f.id === familiaId)?.nombre ?? "Sin familia";
+  };
+
+  const guardarOrdenFamilias = async (nuevoOrden: Familia[]) => {
+    const familiasConPosicion = nuevoOrden.map((familia, index) => ({
+      ...familia,
+      posicion: index + 1,
+    }));
+
+    setFamilias(familiasConPosicion);
+    setOrdenando(true);
+
+    try {
+      await api.familias.ordenar(
+        familiasConPosicion.map((familia) => ({
+          id: familia.id,
+          posicion: familia.posicion,
+        }))
+      );
+
+      toast({
+        title: "Orden actualizado",
+        description: "La posición de las familias se guardó correctamente.",
+      });
+    } catch (err) {
+      await cargar();
+
+      toast({
+        title: "No se pudo ordenar",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setOrdenando(false);
+      setDraggedFamiliaId(null);
+      setDragOverFamiliaId(null);
+    }
+  };
+
+  const moverFamilia = async (
+    familiaId: number,
+    direccion: "arriba" | "abajo"
+  ) => {
+    const indiceActual = familias.findIndex((f) => f.id === familiaId);
+    const indiceNuevo =
+      direccion === "arriba" ? indiceActual - 1 : indiceActual + 1;
+
+    if (indiceActual < 0 || indiceNuevo < 0 || indiceNuevo >= familias.length) {
+      return;
+    }
+
+    const nuevoOrden = [...familias];
+
+    [nuevoOrden[indiceActual], nuevoOrden[indiceNuevo]] = [
+      nuevoOrden[indiceNuevo],
+      nuevoOrden[indiceActual],
+    ];
+
+    await guardarOrdenFamilias(nuevoOrden);
+  };
+
+  const moverFamiliaPorArrastre = async (
+    familiaOrigenId: number,
+    familiaDestinoId: number
+  ) => {
+    if (familiaOrigenId === familiaDestinoId) {
+      setDraggedFamiliaId(null);
+      setDragOverFamiliaId(null);
+      return;
+    }
+
+    const indiceOrigen = familias.findIndex((f) => f.id === familiaOrigenId);
+    const indiceDestino = familias.findIndex((f) => f.id === familiaDestinoId);
+
+    if (indiceOrigen < 0 || indiceDestino < 0) {
+      setDraggedFamiliaId(null);
+      setDragOverFamiliaId(null);
+      return;
+    }
+
+    const nuevoOrden = [...familias];
+    const [familiaMovida] = nuevoOrden.splice(indiceOrigen, 1);
+
+    nuevoOrden.splice(indiceDestino, 0, familiaMovida);
+
+    await guardarOrdenFamilias(nuevoOrden);
+  };
+
+  const handleDragStartFamilia = (
+    e: DragEvent<HTMLDivElement>,
+    familiaId: number
+  ) => {
+    if (ordenando) return;
+
+    setDraggedFamiliaId(familiaId);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(familiaId));
+  };
+
+  const handleDragOverFamilia = (
+    e: DragEvent<HTMLDivElement>,
+    familiaId: number
+  ) => {
+    e.preventDefault();
+
+    if (draggedFamiliaId && draggedFamiliaId !== familiaId) {
+      setDragOverFamiliaId(familiaId);
+    }
+  };
+
+  const handleDropFamilia = async (
+    e: DragEvent<HTMLDivElement>,
+    familiaDestinoId: number
+  ) => {
+    e.preventDefault();
+
+    const idDesdeTransferencia = Number(e.dataTransfer.getData("text/plain"));
+    const familiaOrigenId = idDesdeTransferencia || draggedFamiliaId;
+
+    if (!familiaOrigenId) {
+      setDraggedFamiliaId(null);
+      setDragOverFamiliaId(null);
+      return;
+    }
+
+    await moverFamiliaPorArrastre(familiaOrigenId, familiaDestinoId);
+  };
+
+  const handleDragEndFamilia = () => {
+    setDraggedFamiliaId(null);
+    setDragOverFamiliaId(null);
   };
 
   const handleSubmitFamilia = async (e: FormEvent) => {
@@ -460,6 +601,7 @@ const Familias = () => {
               <SelectTrigger className="h-11 rounded-xl border-border bg-background transition-shadow focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/60">
                 <SelectValue placeholder="Seleccione una familia" />
               </SelectTrigger>
+
               <SelectContent>
                 {familias.map((f) => (
                   <SelectItem key={f.id} value={String(f.id)}>
@@ -523,6 +665,10 @@ const Familias = () => {
           <h3 className="font-heading font-black text-lg text-foreground">
             Familias registradas
           </h3>
+
+          <span className="ml-auto text-xs text-muted-foreground">
+            Arrastra una familia para cambiar su posición
+          </span>
         </div>
 
         <div className="divide-y divide-border">
@@ -536,10 +682,43 @@ const Familias = () => {
                 (s) => s.familia_id === familia.id
               );
 
+              const posicionActual = familias.findIndex(
+                (f) => f.id === familia.id
+              );
+              const esPrimera = posicionActual <= 0;
+              const esUltima = posicionActual === familias.length - 1;
+
+              const estaSiendoArrastrada = draggedFamiliaId === familia.id;
+              const esDestino =
+                dragOverFamiliaId === familia.id &&
+                draggedFamiliaId !== familia.id;
+
               return (
-                <div key={familia.id} className="p-5">
+                <div
+                  key={familia.id}
+                  draggable={!ordenando}
+                  onDragStart={(e) => handleDragStartFamilia(e, familia.id)}
+                  onDragOver={(e) => handleDragOverFamilia(e, familia.id)}
+                  onDrop={(e) => handleDropFamilia(e, familia.id)}
+                  onDragEnd={handleDragEndFamilia}
+                  className={[
+                    "p-5 transition-all duration-150",
+                    ordenando
+                      ? "opacity-70 pointer-events-none"
+                      : "cursor-grab active:cursor-grabbing",
+                    estaSiendoArrastrada ? "opacity-40 bg-muted/60" : "",
+                    esDestino ? "bg-primary/10 ring-2 ring-primary/30" : "",
+                  ].join(" ")}
+                >
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
+                      <div
+                        className="text-muted-foreground cursor-grab active:cursor-grabbing"
+                        title="Arrastrar familia"
+                      >
+                        <GripVertical className="w-5 h-5" />
+                      </div>
+
                       <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center overflow-hidden border border-border">
                         {familia.imagen ? (
                           <img
@@ -558,8 +737,8 @@ const Familias = () => {
                         </p>
 
                         <p className="text-xs text-muted-foreground">
-                          {subs.length} subfamilia
-                          {subs.length === 1 ? "" : "s"}
+                          Posición {posicionActual + 1} · {subs.length}{" "}
+                          subfamilia{subs.length === 1 ? "" : "s"}
                         </p>
                       </div>
                     </div>
@@ -567,8 +746,29 @@ const Familias = () => {
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
+                        onClick={() => moverFamilia(familia.id, "arriba")}
+                        disabled={esPrimera || ordenando}
+                        className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                        title="Subir familia"
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => moverFamilia(familia.id, "abajo")}
+                        disabled={esUltima || ordenando}
+                        className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                        title="Bajar familia"
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => editarFamilia(familia)}
-                        className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                        disabled={ordenando}
+                        className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
                         title="Editar familia"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -577,7 +777,8 @@ const Familias = () => {
                       <button
                         type="button"
                         onClick={() => solicitarEliminarFamilia(familia)}
-                        className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                        disabled={ordenando}
+                        className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-30 disabled:pointer-events-none"
                         title="Eliminar familia"
                       >
                         <Trash2 className="w-4 h-4" />
