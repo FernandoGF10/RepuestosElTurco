@@ -121,6 +121,8 @@ interface RawPedido {
   items: RawPedidoItem[];
   total: number;
   notas: string;
+  metodo_pago: Pedido["metodoPago"];
+  estado_pago: Pedido["estadoPago"];
 }
 
 interface RawConfig {
@@ -173,6 +175,8 @@ function toPedido(r: RawPedido): Pedido {
     })),
     total: r.total,
     notas: r.notas,
+    metodoPago: r.metodo_pago,
+    estadoPago: r.estado_pago,
   };
 }
 
@@ -298,6 +302,7 @@ export const api = {
         cantidad: number;
       }[];
       notas?: string;
+      metodo_pago?: Pedido["metodoPago"];
     }): Promise<Pedido> => {
       const raw = await request<RawPedido>("/api/pedidos", {
         method: "POST",
@@ -312,6 +317,51 @@ export const api = {
         body: JSON.stringify({ estado }),
       });
       return toPedido(raw);
+    },
+  },
+
+  pagos: {
+    publicKey: (): Promise<{ public_key: string }> => request("/api/pagos/public-key"),
+
+    crearPreferencia: (
+      pedidoId: string
+    ): Promise<{ preference_id: string; init_point: string; public_key: string }> =>
+      request(`/api/pagos/preferencia/${pedidoId}`, { method: "POST" }),
+
+    procesar: (
+      pedidoId: string,
+      data: {
+        token?: string;
+        issuer_id?: string;
+        payment_method_id: string;
+        installments: number;
+        payer_email: string;
+        identification?: { type: string; number: string };
+      }
+    ): Promise<{
+      status: string;
+      status_detail: string;
+      estado_pago: Pedido["estadoPago"];
+      numero: string;
+    }> =>
+      request(`/api/pagos/procesar/${pedidoId}`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+
+    verificar: (params: {
+      paymentId?: string;
+      pedidoId?: string;
+    }): Promise<{
+      numero: string;
+      estado: Pedido["estado"];
+      estado_pago: Pedido["estadoPago"];
+      mp_payment_id: string | null;
+    }> => {
+      const q = new URLSearchParams();
+      if (params.paymentId) q.set("payment_id", params.paymentId);
+      if (params.pedidoId) q.set("pedido_id", params.pedidoId);
+      return request(`/api/pagos/verificar?${q}`);
     },
   },
 

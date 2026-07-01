@@ -1,4 +1,6 @@
 export type EstadoPedido = "pendiente" | "preparando" | "listo" | "entregado" | "cancelado";
+export type EstadoPago = "no_aplica" | "pendiente" | "en_proceso" | "aprobado" | "rechazado";
+export type MetodoPago = "retiro_tienda" | "mercado_pago";
 
 export interface ProductoCompatibilidadAuto {
   id?: number;
@@ -53,6 +55,8 @@ export interface Pedido {
   total: number;
   estado: EstadoPedido;
   notas?: string;
+  metodoPago: MetodoPago;
+  estadoPago: EstadoPago;
 }
 
 export interface SiteConfig {

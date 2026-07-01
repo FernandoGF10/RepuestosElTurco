@@ -47,17 +47,29 @@ const SiteHeader = ({ searchTerm, onSearchChange, cartCount, onOpenCart }: SiteH
           </a>
 
           {/* Search */}
-          <div className="hidden md:flex flex-1 max-w-lg relative">
+          <div className="hidden md:flex flex-1 max-w-lg relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-topbar-foreground/50 group-focus-within:text-secondary transition-colors pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar repuesto por nombre, código o marca..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full rounded-lg pl-4 pr-12 py-2.5 text-sm bg-topbar-foreground/10 text-topbar-foreground placeholder:text-topbar-foreground/50 border border-topbar-foreground/20 focus:outline-none focus:ring-2 focus:ring-secondary/60 focus:bg-topbar-foreground/15 transition-all"
+              className="w-full rounded-full pl-11 pr-11 py-2.5 text-sm bg-topbar-foreground/10 text-topbar-foreground placeholder:text-topbar-foreground/50 border border-topbar-foreground/20 outline-none focus:ring-2 focus:ring-secondary/60 focus:border-secondary/50 focus:bg-topbar-foreground/15 shadow-inner transition-all"
             />
-            <button className="absolute right-1 top-1/2 -translate-y-1/2 bg-secondary text-secondary-foreground rounded-md p-1.5 hover:brightness-110 transition-all">
-              <Search className="w-4 h-4" />
-            </button>
+            {searchTerm ? (
+              <button
+                type="button"
+                onClick={() => onSearchChange("")}
+                aria-label="Limpiar búsqueda"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-topbar-foreground/70 hover:text-topbar-foreground p-1.5 rounded-full hover:bg-topbar-foreground/10 transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            ) : (
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-secondary text-secondary-foreground rounded-full p-1.5 pointer-events-none">
+                <Search className="w-4 h-4" />
+              </span>
+            )}
           </div>
 
           {/* Nav desktop */}
@@ -111,17 +123,29 @@ const SiteHeader = ({ searchTerm, onSearchChange, cartCount, onOpenCart }: SiteH
         {/* Mobile drawer */}
         {menuOpen && (
           <div className="md:hidden border-t border-topbar-foreground/20 px-4 pb-4 space-y-3 bg-topbar">
-            <div className="relative pt-3">
+            <div className="relative pt-3 group">
+              <Search className="absolute left-4 top-1/2 mt-1.5 -translate-y-1/2 w-4 h-4 text-topbar-foreground/50 group-focus-within:text-secondary transition-colors pointer-events-none" />
               <input
                 type="text"
                 placeholder="Buscar repuesto..."
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full rounded-lg pl-4 pr-12 py-2.5 text-sm bg-topbar-foreground/10 text-topbar-foreground placeholder:text-topbar-foreground/50 border border-topbar-foreground/20 focus:outline-none focus:ring-2 focus:ring-secondary/60"
+                className="w-full rounded-full pl-11 pr-11 py-2.5 text-sm bg-topbar-foreground/10 text-topbar-foreground placeholder:text-topbar-foreground/50 border border-topbar-foreground/20 outline-none focus:ring-2 focus:ring-secondary/60 shadow-inner transition-all"
               />
-              <button className="absolute right-1 top-1/2 mt-1.5 -translate-y-1/2 bg-secondary text-secondary-foreground rounded-md p-1.5">
-                <Search className="w-4 h-4" />
-              </button>
+              {searchTerm ? (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange("")}
+                  aria-label="Limpiar búsqueda"
+                  className="absolute right-1.5 top-1/2 mt-1.5 -translate-y-1/2 text-topbar-foreground/70 p-1.5 rounded-full hover:bg-topbar-foreground/10 transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              ) : (
+                <span className="absolute right-1.5 top-1/2 mt-1.5 -translate-y-1/2 bg-secondary text-secondary-foreground rounded-full p-1.5 pointer-events-none">
+                  <Search className="w-4 h-4" />
+                </span>
+              )}
             </div>
             <nav className="flex flex-col">
               {["Inicio", "Repuestos", "Contacto"].map((label) => (

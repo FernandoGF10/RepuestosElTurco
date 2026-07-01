@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
-from app.models.pedido import EstadoPedido
+from app.models.pedido import EstadoPedido, EstadoPago, MetodoPago
 import uuid
 
 
@@ -24,6 +24,7 @@ class PedidoCreate(BaseModel):
     cliente: ClienteIn
     items: list[PedidoItemIn]
     notas: Optional[str] = ""
+    metodo_pago: Optional[MetodoPago] = MetodoPago.retiro_tienda
 
 
 class EstadoUpdate(BaseModel):
@@ -57,6 +58,8 @@ class PedidoOut(BaseModel):
     items: list[PedidoItemOut]
     total: int
     notas: str
+    metodo_pago: MetodoPago
+    estado_pago: EstadoPago
 
     model_config = {"from_attributes": True}
 
@@ -75,4 +78,6 @@ class PedidoOut(BaseModel):
             items=[PedidoItemOut.model_validate(i) for i in p.items],
             total=p.total,
             notas=p.notas or "",
+            metodo_pago=p.metodo_pago,
+            estado_pago=p.estado_pago,
         )

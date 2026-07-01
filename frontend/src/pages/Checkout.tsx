@@ -1,8 +1,10 @@
 import { FormEvent, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, ShoppingBag, MapPin, Loader2, Tag, Phone, User, Mail, FileText, Store } from "lucide-react";
+import { ArrowLeft, ShoppingBag, MapPin, Loader2, Tag, Phone, User, Mail, FileText, Store, CreditCard, Banknote, XCircle, ChevronLeft, Package } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { api } from "@/lib/api";
+import MercadoPagoBrick from "@/components/MercadoPagoBrick";
+import type { MetodoPago, Pedido } from "@/types/admin";
 
 const logo = "/img/logo-el-turco.png";
 
@@ -22,6 +24,10 @@ const Checkout = () => {
   const [form, setForm] = useState<ClienteForm>({ nombre: "", telefono: "", email: "", notas: "" });
   const [errors, setErrors] = useState<Partial<ClienteForm>>({});
   const [loading, setLoading] = useState(false);
+  const [metodoPago, setMetodoPago] = useState<MetodoPago>("retiro_tienda");
+  const [step, setStep] = useState<"datos" | "pago">("datos");
+  const [pedidoCreado, setPedidoCreado] = useState<Pedido | null>(null);
+  const [pagoError, setPagoError] = useState<string | null>(null);
 
   if (items.length === 0) {
     return (
@@ -68,7 +74,15 @@ const Checkout = () => {
           cantidad: item.cantidad,
         })),
         notas: form.notas.trim() || undefined,
+        metodo_pago: metodoPago,
       });
+
+      if (metodoPago === "mercado_pago") {
+        setPedidoCreado(pedido);
+        setStep("pago");
+        return;
+      }
+
       clearCart();
       navigate(`/pedido/${pedido.numero}`, { replace: true, state: { pedido } });
     } catch (err) {
@@ -76,6 +90,19 @@ const Checkout = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePagoAprobado = () => {
+    if (!pedidoCreado) return;
+    clearCart();
+    navigate(`/pedido/${pedidoCreado.numero}`, {
+      replace: true,
+      state: { pedido: { ...pedidoCreado, estadoPago: "aprobado" as const } },
+    });
+  };
+
+  const handlePagoRechazado = (motivo: string) => {
+    setPagoError(motivo);
   };
 
   return (
@@ -100,10 +127,92 @@ const Checkout = () => {
 
       <main className="container py-8 max-w-5xl">
         <div className="mb-6">
-          <h1 className="font-heading font-black text-2xl md:text-3xl text-foreground">Finalizar compra</h1>
-          <p className="text-sm text-muted-foreground mt-1">Completa tus datos para confirmar el pedido.</p>
+          <h1 className="font-heading font-black text-2xl md:text-3xl text-foreground">
+            {step === "pago" ? "Pagar con Mercado Pago" : "Finalizar compra"}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {step === "pago"
+              ? "Ingresa los datos de tu tarjeta. El pago se procesa aquí mismo, sin salir del sitio."
+              : "Completa tus datos para confirmar el pedido."}
+          </p>
         </div>
 
+        {step === "pago" && pedidoCreado ? (
+          <div className="grid lg:grid-cols-[1fr_400px] gap-6 items-start">
+            <div className="space-y-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("datos");
+                  setPagoError(null);
+                }}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" /> Volver a mis datos
+              </button>
+
+              <div className="flex items-center gap-3 bg-card border border-border rounded-xl px-5 py-3">
+                <Package className="w-5 h-5 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium">Pedido</p>
+                  <p className="font-mono font-black text-lg text-primary">{pedidoCreado.numero}</p>
+                </div>
+              </div>
+
+              {pagoError && (
+                <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+                  <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-heading font-bold">No se pudo procesar el pago</p>
+                    <p className="text-xs mt-0.5 opacity-90">{pagoError} — puedes intentar nuevamente.</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-card border border-border rounded-xl p-5">
+                <MercadoPagoBrick
+                  pedidoId={pedidoCreado.id}
+                  amount={pedidoCreado.total}
+                  payerEmail={form.email.trim()}
+                  onAprobado={handlePagoAprobado}
+                  onRechazado={handlePagoRechazado}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-card border border-border rounded-xl overflow-hidden">
+                <div className="px-5 py-4 border-b border-border">
+                  <h2 className="font-heading font-bold text-foreground flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-primary" /> Resumen del pedido
+                  </h2>
+                </div>
+                <ul className="divide-y divide-border">
+                  {items.map((item) => (
+                    <li key={item.producto.id} className="flex items-center gap-3 px-5 py-3">
+                      <img
+                        src={item.producto.imagen}
+                        alt={item.producto.nombre}
+                        className="w-12 h-12 rounded-lg object-contain bg-muted shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-heading font-bold text-sm text-foreground truncate">{item.producto.nombre}</p>
+                        <p className="text-xs text-muted-foreground">Cantidad: {item.cantidad}</p>
+                      </div>
+                      <p className="font-heading font-bold text-sm text-foreground shrink-0">
+                        {formatCLP(item.producto.precio * item.cantidad)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+                <div className="px-5 py-4 bg-muted/30 flex justify-between font-heading font-black text-lg text-foreground">
+                  <span>Total</span>
+                  <span className="text-primary">{formatCLP(pedidoCreado.total)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-[1fr_400px] gap-6 items-start">
 
@@ -186,6 +295,80 @@ const Checkout = () => {
                 </label>
               </div>
 
+              {/* Método de pago */}
+              <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+                <h2 className="font-heading font-bold text-foreground flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-primary" /> Método de pago
+                </h2>
+
+                <label
+                  className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                    metodoPago === "retiro_tienda"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="metodo_pago"
+                    checked={metodoPago === "retiro_tienda"}
+                    onChange={() => setMetodoPago("retiro_tienda")}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center ${
+                      metodoPago === "retiro_tienda" ? "border-primary bg-primary" : "border-muted-foreground/40"
+                    }`}
+                  >
+                    {metodoPago === "retiro_tienda" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Banknote className="w-4 h-4 text-primary" />
+                      <p className="font-heading font-bold text-sm text-foreground">Pago en tienda</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Efectivo o transferencia al retirar tu pedido en el local.
+                    </p>
+                  </div>
+                </label>
+
+                <label
+                  className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                    metodoPago === "mercado_pago"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="metodo_pago"
+                    checked={metodoPago === "mercado_pago"}
+                    onChange={() => setMetodoPago("mercado_pago")}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center ${
+                      metodoPago === "mercado_pago" ? "border-primary bg-primary" : "border-muted-foreground/40"
+                    }`}
+                  >
+                    {metodoPago === "mercado_pago" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-primary" />
+                      <p className="font-heading font-bold text-sm text-foreground">Mercado Pago</p>
+                      <span className="text-[10px] font-bold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Online
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Tarjeta de crédito, débito o saldo de Mercado Pago. Serás redirigido a pagar de forma segura.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
               {/* Notas */}
               <div className="bg-card border border-border rounded-xl p-5 space-y-3">
                 <h2 className="font-heading font-bold text-foreground flex items-center gap-2">
@@ -203,7 +386,7 @@ const Checkout = () => {
 
               {/* Submit mobile */}
               <div className="lg:hidden">
-                <SubmitButton loading={loading} total={total} />
+                <SubmitButton loading={loading} total={total} metodoPago={metodoPago} />
               </div>
             </div>
 
@@ -257,31 +440,48 @@ const Checkout = () => {
 
               {/* Submit desktop */}
               <div className="hidden lg:block">
-                <SubmitButton loading={loading} total={total} />
+                <SubmitButton loading={loading} total={total} metodoPago={metodoPago} />
               </div>
 
               <p className="text-xs text-muted-foreground text-center leading-relaxed px-2">
-                Al confirmar tu pedido aceptas que será preparado para retiro en tienda.
+                {metodoPago === "mercado_pago"
+                  ? "A continuación vas a ingresar los datos de tu tarjeta aquí mismo, sin salir del sitio."
+                  : "Al confirmar tu pedido aceptas que será preparado para retiro en tienda."}{" "}
                 El equipo se pondrá en contacto si hay alguna consulta.
               </p>
             </div>
           </div>
         </form>
+        )}
       </main>
     </div>
   );
 };
 
-const SubmitButton = ({ loading, total }: { loading: boolean; total: number }) => (
+const SubmitButton = ({
+  loading,
+  total,
+  metodoPago,
+}: {
+  loading: boolean;
+  total: number;
+  metodoPago: MetodoPago;
+}) => (
   <button
     type="submit"
     disabled={loading}
     className="w-full flex items-center justify-center gap-2 bg-secondary text-secondary-foreground font-heading font-black text-base py-4 rounded-xl hover:brightness-110 transition-all disabled:opacity-60 shadow-md"
   >
     {loading ? (
-      <><Loader2 className="w-5 h-5 animate-spin" /> Procesando pedido...</>
+      <>
+        <Loader2 className="w-5 h-5 animate-spin" />
+        {metodoPago === "mercado_pago" ? "Preparando el pago..." : "Procesando pedido..."}
+      </>
     ) : (
-      <>Confirmar pedido · {(total).toLocaleString("es-CL", { style: "currency", currency: "CLP", minimumFractionDigits: 0 })}</>
+      <>
+        {metodoPago === "mercado_pago" ? "Continuar al pago" : "Confirmar pedido"} ·{" "}
+        {total.toLocaleString("es-CL", { style: "currency", currency: "CLP", minimumFractionDigits: 0 })}
+      </>
     )}
   </button>
 );

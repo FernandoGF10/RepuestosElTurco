@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Wrench, LayoutGrid } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wrench, LayoutGrid, Car, X } from "lucide-react";
 
 import SiteHeader from "@/components/SiteHeader";
 import HeroBanner from "@/components/HeroBanner";
@@ -231,6 +231,13 @@ const Index = () => {
     anioVehiculoActivo,
   ]);
 
+  const hayFiltroVehiculo = Boolean(
+    marcaVehiculoActiva ||
+      modeloVehiculoActivo ||
+      motorVehiculoActivo ||
+      anioVehiculoActivo
+  );
+
   const scrollByAmount = (amount: number) => {
     scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" });
   };
@@ -258,100 +265,113 @@ const Index = () => {
 
       <section id="repuestos" className="py-12 flex-1">
         <div className="container">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <span className="text-xs text-muted-foreground font-heading font-bold uppercase tracking-[0.2em]">
+              <span className="text-xs text-muted-foreground font-heading font-bold uppercase tracking-[0.2em] leading-none">
                 Catálogo
               </span>
 
-              <h2 className="font-heading font-black text-2xl md:text-3xl text-foreground">
+              <h2 className="font-heading font-black text-2xl md:text-3xl text-foreground leading-tight mt-1">
                 Repuestos y Accesorios
               </h2>
             </div>
 
-            <div className="w-full md:w-auto flex flex-col items-start md:items-end gap-2">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full md:w-auto">
-                <select
-                  value={marcaVehiculoActiva ?? ""}
-                  onChange={(e) => {
-                    const id = Number(e.target.value);
-                    setMarcaVehiculoActiva(id || null);
-                    setModeloVehiculoActivo(null);
-                    setMotorVehiculoActivo(null);
-                  }}
-                  className="h-9 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground outline-none hover:border-primary/40"
-                >
-                  <option value="">Marca vehículo</option>
+            <div className="w-full md:w-[420px]">
+              <div className="rounded-2xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow p-4">
+                <div className="flex items-center justify-between gap-3 mb-3.5">
+                  <div className="flex items-center gap-2">
+                    <span className="grid place-items-center w-8 h-8 rounded-full bg-primary/10 text-primary shrink-0">
+                      <Car className="w-4 h-4" />
+                    </span>
+                    <div className="leading-tight">
+                      <p className="text-xs font-heading font-black uppercase tracking-[0.15em] text-foreground">
+                        Filtrar por vehículo
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Encuentra repuestos 100% compatibles
+                      </p>
+                    </div>
+                  </div>
 
-                  {marcasVehiculo.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.nombre}
-                    </option>
-                  ))}
-                </select>
+                  {hayFiltroVehiculo && (
+                    <button
+                      type="button"
+                      onClick={limpiarFiltroVehiculo}
+                      className="flex items-center gap-1 shrink-0 text-[11px] font-heading font-bold text-primary hover:text-primary/70 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                      Limpiar
+                    </button>
+                  )}
+                </div>
 
-                <select
-                  value={modeloVehiculoActivo ?? ""}
-                  disabled={!marcaVehiculoActiva}
-                  onChange={(e) => {
-                    const id = Number(e.target.value);
-                    setModeloVehiculoActivo(id || null);
-                    setMotorVehiculoActivo(null);
-                  }}
-                  className="h-9 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground outline-none hover:border-primary/40 disabled:opacity-50"
-                >
-                  <option value="">Modelo</option>
-
-                  {modelosVehiculo.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.nombre}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={motorVehiculoActivo ?? ""}
-                  disabled={!modeloVehiculoActivo}
-                  onChange={(e) => {
-                    const id = Number(e.target.value);
-                    setMotorVehiculoActivo(id || null);
-                  }}
-                  className="h-9 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground outline-none hover:border-primary/40 disabled:opacity-50"
-                >
-                  <option value="">Motor</option>
-
-                  {motoresVehiculo.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.nombre}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  type="number"
-                  min={1900}
-                  max={2100}
-                  value={anioVehiculoActivo}
-                  onChange={(e) => setAnioVehiculoActivo(e.target.value)}
-                  placeholder="Año"
-                  className="h-9 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground outline-none hover:border-primary/40"
-                />
-              </div>
-
-              <div className="flex flex-wrap items-center justify-start md:justify-end gap-2">
-
-                {(marcaVehiculoActiva ||
-                  modeloVehiculoActivo ||
-                  motorVehiculoActivo ||
-                  anioVehiculoActivo) && (
-                  <button
-                    type="button"
-                    onClick={limpiarFiltroVehiculo}
-                    className="text-xs font-heading font-bold text-primary hover:underline"
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <select
+                    value={marcaVehiculoActiva ?? ""}
+                    onChange={(e) => {
+                      const id = Number(e.target.value);
+                      setMarcaVehiculoActiva(id || null);
+                      setModeloVehiculoActivo(null);
+                      setMotorVehiculoActivo(null);
+                    }}
+                    className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground outline-none transition-all hover:border-primary/40 focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
                   >
-                    Limpiar vehículo
-                  </button>
-                )}
+                    <option value="">Marca</option>
+
+                    {marcasVehiculo.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.nombre}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={modeloVehiculoActivo ?? ""}
+                    disabled={!marcaVehiculoActiva}
+                    onChange={(e) => {
+                      const id = Number(e.target.value);
+                      setModeloVehiculoActivo(id || null);
+                      setMotorVehiculoActivo(null);
+                    }}
+                    className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground outline-none transition-all hover:border-primary/40 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-border"
+                  >
+                    <option value="">Modelo</option>
+
+                    {modelosVehiculo.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.nombre}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={motorVehiculoActivo ?? ""}
+                    disabled={!modeloVehiculoActivo}
+                    onChange={(e) => {
+                      const id = Number(e.target.value);
+                      setMotorVehiculoActivo(id || null);
+                    }}
+                    className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground outline-none transition-all hover:border-primary/40 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-border"
+                  >
+                    <option value="">Motor</option>
+
+                    {motoresVehiculo.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.nombre}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="number"
+                    min={1900}
+                    max={2100}
+                    value={anioVehiculoActivo}
+                    onChange={(e) => setAnioVehiculoActivo(e.target.value)}
+                    placeholder="Año"
+                    className="h-10 rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground outline-none transition-all hover:border-primary/40 focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -13,6 +13,17 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = "http://localhost:8080,http://127.0.0.1:8080,http://localhost:5173,http://localhost:3000"
 
+    # Mercado Pago (usa credenciales de prueba de tu cuenta de desarrollador
+    # en https://www.mercadopago.cl/developers/panel/app para probar en local)
+    MP_ACCESS_TOKEN: str = ""
+    MP_PUBLIC_KEY: str = ""
+    # URL pública donde Mercado Pago puede enviar el webhook (ngrok, etc).
+    # En local sin túnel puede dejarse vacío: la verificación del pago se hace
+    # igual desde la página de retorno (ver /api/pagos/verificar).
+    MP_WEBHOOK_URL: str = ""
+    # Origen del frontend, usado para construir las back_urls del checkout de MP
+    FRONTEND_URL: str = "http://localhost:8080"
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",")]

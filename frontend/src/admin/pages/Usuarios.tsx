@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { UserCog, Plus, Edit2, Trash2, Shield, ShieldCheck, KeyRound, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api, type UsuarioOut } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -21,6 +22,11 @@ const ROL_CONFIG: Record<RolType, { label: string; icon: React.ElementType; colo
   admin: { label: "Administrador", icon: ShieldCheck, color: "bg-primary/10 text-primary" },
   vendedor: { label: "Vendedor", icon: Shield, color: "bg-secondary/20 text-secondary-foreground" },
 };
+
+const fieldInputCls =
+  "h-11 rounded-xl border-border bg-background transition-shadow focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/60";
+
+const fieldLabelCls = "text-[13px] font-semibold text-foreground";
 
 const Usuarios = () => {
   const { toast } = useToast();
@@ -165,7 +171,7 @@ const Usuarios = () => {
       </div>
 
       {/* Mi cuenta */}
-      <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
             <User className="w-4 h-4 text-primary" />
@@ -176,11 +182,11 @@ const Usuarios = () => {
         <form onSubmit={handleSaveMe} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-heading font-bold uppercase tracking-widest text-muted-foreground">Nombre de usuario</label>
+              <Label className={fieldLabelCls}>Nombre de usuario</Label>
               <Input
                 value={miUsername}
                 onChange={(e) => setMiUsername(e.target.value)}
-                className="rounded-xl"
+                className={fieldInputCls}
                 placeholder="Tu usuario"
                 minLength={3}
                 required
@@ -188,23 +194,23 @@ const Usuarios = () => {
             </div>
             <div />
             <div className="space-y-1.5">
-              <label className="text-xs font-heading font-bold uppercase tracking-widest text-muted-foreground">Nueva contraseña</label>
+              <Label className={fieldLabelCls}>Nueva contraseña</Label>
               <Input
                 type="password"
                 value={miPassword}
                 onChange={(e) => setMiPassword(e.target.value)}
-                className="rounded-xl"
+                className={fieldInputCls}
                 placeholder="Dejar vacío para no cambiar"
                 autoComplete="new-password"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-heading font-bold uppercase tracking-widest text-muted-foreground">Confirmar contraseña</label>
+              <Label className={fieldLabelCls}>Confirmar contraseña</Label>
               <Input
                 type="password"
                 value={miPasswordConfirm}
                 onChange={(e) => setMiPasswordConfirm(e.target.value)}
-                className="rounded-xl"
+                className={fieldInputCls}
                 placeholder="Repetir nueva contraseña"
                 autoComplete="new-password"
               />
@@ -243,32 +249,32 @@ const Usuarios = () => {
           <form onSubmit={handleCrear} className="px-6 py-4 border-b border-border bg-muted/30 space-y-4">
             <p className="text-xs font-heading font-bold uppercase tracking-widest text-muted-foreground">Nuevo usuario</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Usuario</label>
+              <div className="space-y-1.5">
+                <Label className={fieldLabelCls}>Usuario</Label>
                 <Input
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
-                  className="rounded-xl"
+                  className={fieldInputCls}
                   placeholder="nombre_usuario"
                   minLength={3}
                   required
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Contraseña</label>
+              <div className="space-y-1.5">
+                <Label className={fieldLabelCls}>Contraseña</Label>
                 <Input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="rounded-xl"
+                  className={fieldInputCls}
                   placeholder="••••••••"
                   required
                   autoComplete="new-password"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Rol</label>
-                <div className="flex gap-2 h-10">
+              <div className="space-y-1.5">
+                <Label className={fieldLabelCls}>Rol</Label>
+                <div className="flex gap-2 h-11">
                   {(["admin", "vendedor"] as RolType[]).map((r) => (
                     <button
                       key={r}
@@ -302,30 +308,30 @@ const Usuarios = () => {
           <form onSubmit={handleSaveEdit} className="px-6 py-4 border-b border-border bg-muted/30 space-y-4">
             <p className="text-xs font-heading font-bold uppercase tracking-widest text-muted-foreground">Editando: {editando.username}</p>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Usuario</label>
+              <div className="space-y-1.5">
+                <Label className={fieldLabelCls}>Usuario</Label>
                 <Input
                   value={editUsername}
                   onChange={(e) => setEditUsername(e.target.value)}
-                  className="rounded-xl"
+                  className={fieldInputCls}
                   minLength={3}
                   required
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Nueva contraseña</label>
+              <div className="space-y-1.5">
+                <Label className={fieldLabelCls}>Nueva contraseña</Label>
                 <Input
                   type="password"
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
-                  className="rounded-xl"
+                  className={fieldInputCls}
                   placeholder="Sin cambios"
                   autoComplete="new-password"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Rol</label>
-                <div className="flex gap-2 h-10">
+              <div className="space-y-1.5">
+                <Label className={fieldLabelCls}>Rol</Label>
+                <div className="flex gap-2 h-11">
                   {(["admin", "vendedor"] as RolType[]).map((r) => (
                     <button
                       key={r}
@@ -342,12 +348,12 @@ const Usuarios = () => {
                   ))}
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Estado</label>
+              <div className="space-y-1.5">
+                <Label className={fieldLabelCls}>Estado</Label>
                 <button
                   type="button"
                   onClick={() => setEditActivo(!editActivo)}
-                  className={`w-full h-10 rounded-xl text-xs font-heading font-bold uppercase tracking-wider transition-all border ${
+                  className={`w-full h-11 rounded-xl text-xs font-heading font-bold uppercase tracking-wider transition-all border ${
                     editActivo
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                       : "bg-muted text-muted-foreground border-border"

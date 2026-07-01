@@ -12,3 +12,11 @@ ADMIN_PASS=password_admin
 
 # CORS
 CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# Mercado Pago (credenciales de PRUEBA de tu cuenta de developers:
+# https://www.mercadopago.cl/developers/panel/app)
+MP_ACCESS_TOKEN=TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+MP_PUBLIC_KEY=TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Opcional: URL pública (ngrok, etc) para recibir el webhook en local
+MP_WEBHOOK_URL=
+FRONTEND_URL=http://localhost:8080

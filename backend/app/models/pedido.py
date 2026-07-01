@@ -15,6 +15,19 @@ class EstadoPedido(str, enum.Enum):
     cancelado = "cancelado"
 
 
+class EstadoPago(str, enum.Enum):
+    no_aplica = "no_aplica"       # pagos en tienda, sin pasarela
+    pendiente = "pendiente"
+    en_proceso = "en_proceso"
+    aprobado = "aprobado"
+    rechazado = "rechazado"
+
+
+class MetodoPago(str, enum.Enum):
+    retiro_tienda = "retiro_tienda"
+    mercado_pago = "mercado_pago"
+
+
 class Pedido(Base):
     __tablename__ = "pedidos"
 
@@ -30,6 +43,12 @@ class Pedido(Base):
 
     total = Column(Integer, nullable=False)  # CLP
     notas = Column(Text, default="")
+
+    # Pago (Mercado Pago)
+    metodo_pago = Column(SAEnum(MetodoPago), default=MetodoPago.retiro_tienda, nullable=False)
+    estado_pago = Column(SAEnum(EstadoPago), default=EstadoPago.no_aplica, nullable=False)
+    mp_preference_id = Column(String(120), nullable=True)
+    mp_payment_id = Column(String(120), nullable=True, index=True)
 
     items = relationship("PedidoItem", back_populates="pedido", cascade="all, delete-orphan")
 

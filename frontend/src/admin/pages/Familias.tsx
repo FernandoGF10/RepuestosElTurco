@@ -11,6 +11,14 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -334,7 +342,7 @@ const Familias = () => {
             placeholder="Buscar familia o subfamilia..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 rounded-xl"
+            className="h-11 rounded-xl border-border bg-background pl-9 transition-shadow focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/60"
           />
         </div>
       </div>
@@ -342,7 +350,7 @@ const Familias = () => {
       <div className="grid lg:grid-cols-2 gap-6">
         <form
           onSubmit={handleSubmitFamilia}
-          className="bg-card border border-border rounded-2xl p-5 space-y-4"
+          className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4"
         >
           <div>
             <h3 className="font-heading font-black text-lg text-foreground">
@@ -354,8 +362,10 @@ const Familias = () => {
             </p>
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Nombre *</label>
+          <div className="space-y-1.5">
+            <Label className="text-[13px] font-semibold text-foreground">
+              Nombre<span className="ml-0.5 text-destructive">*</span>
+            </Label>
 
             <Input
               value={familiaForm.nombre}
@@ -366,12 +376,14 @@ const Familias = () => {
                 }))
               }
               placeholder="Motor"
-              className="rounded-xl"
+              className="h-11 rounded-xl border-border bg-background transition-shadow focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/60"
             />
           </div>
 
-          <div>
-            <label className="text-sm font-medium">URL de imagen</label>
+          <div className="space-y-1.5">
+            <Label className="text-[13px] font-semibold text-foreground">
+              URL de imagen
+            </Label>
 
             <Input
               value={familiaForm.imagen}
@@ -382,7 +394,7 @@ const Familias = () => {
                 }))
               }
               placeholder="https://... o /img/categorias/motor.png"
-              className="rounded-xl"
+              className="h-11 rounded-xl border-border bg-background transition-shadow focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/60"
             />
 
             <p className="text-xs text-muted-foreground mt-1">
@@ -419,7 +431,7 @@ const Familias = () => {
 
         <form
           onSubmit={handleSubmitSubfamilia}
-          className="bg-card border border-border rounded-2xl p-5 space-y-4"
+          className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4"
         >
           <div>
             <h3 className="font-heading font-black text-lg text-foreground">
@@ -431,31 +443,37 @@ const Familias = () => {
             </p>
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Familia *</label>
+          <div className="space-y-1.5">
+            <Label className="text-[13px] font-semibold text-foreground">
+              Familia<span className="ml-0.5 text-destructive">*</span>
+            </Label>
 
-            <select
+            <Select
               value={subfamiliaForm.familia_id}
-              onChange={(e) =>
+              onValueChange={(v) =>
                 setSubfamiliaForm((prev) => ({
                   ...prev,
-                  familia_id: e.target.value,
+                  familia_id: v,
                 }))
               }
-              className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
             >
-              <option value="">Seleccione una familia</option>
-
-              {familias.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.nombre}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-11 rounded-xl border-border bg-background transition-shadow focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/60">
+                <SelectValue placeholder="Seleccione una familia" />
+              </SelectTrigger>
+              <SelectContent>
+                {familias.map((f) => (
+                  <SelectItem key={f.id} value={String(f.id)}>
+                    {f.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Nombre *</label>
+          <div className="space-y-1.5">
+            <Label className="text-[13px] font-semibold text-foreground">
+              Nombre<span className="ml-0.5 text-destructive">*</span>
+            </Label>
 
             <Input
               value={subfamiliaForm.nombre}
@@ -466,7 +484,7 @@ const Familias = () => {
                 }))
               }
               placeholder="Amortiguadores"
-              className="rounded-xl"
+              className="h-11 rounded-xl border-border bg-background transition-shadow focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/60"
             />
           </div>
 

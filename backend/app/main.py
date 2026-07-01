@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from app.core.config import get_settings
 from app.core.database import engine, Base
 from app.core.security import hash_password
-from app.routers import auth, productos, pedidos, clientes, reportes, config, usuarios, marcas, familias, subfamilias, vehiculos
+from app.routers import auth, productos, pedidos, pagos, clientes, reportes, config, usuarios, marcas, familias, subfamilias, vehiculos
 
 settings = get_settings()
 
@@ -117,6 +117,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(productos.router)
 app.include_router(pedidos.router)
+app.include_router(pagos.router)
 app.include_router(clientes.router)
 app.include_router(reportes.router)
 app.include_router(config.router)
