@@ -1,5 +1,17 @@
 export type EstadoPedido = "pendiente" | "preparando" | "listo" | "entregado" | "cancelado";
 
+export interface ProductoCompatibilidadAuto {
+  id?: number;
+  marca_id: number;
+  modelo_id: number;
+  motor_id: number;
+  anio_desde: number;
+  anio_hasta: number;
+  marca_nombre?: string;
+  modelo_nombre?: string;
+  motor_nombre?: string;
+}
+
 export interface ProductoAdmin {
   id: string;
   codigo: string;
@@ -13,6 +25,7 @@ export interface ProductoAdmin {
   descripcion: string;
   detalle: string;
   compatibilidad: { auto: string; anios: string }[];
+  compatibilidades_auto?: ProductoCompatibilidadAuto[];
   imagen: string;
   stock: number;
   activo: boolean;

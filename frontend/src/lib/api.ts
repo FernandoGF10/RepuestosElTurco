@@ -6,7 +6,7 @@ import filtroImg from "@/assets/products/filtro-aceite.png";
 import bobinaImg from "@/assets/products/bobina-encendido.png";
 import correaImg from "@/assets/products/correa-distribucion.png";
 import discoImg from "@/assets/products/disco-freno.png";
-import type { ProductoAdmin, Pedido, PedidoItem, SiteConfig } from "@/types/admin";
+import type { ProductoAdmin, ProductoCompatibilidadAuto, Pedido, PedidoItem, SiteConfig } from "@/types/admin";
 
 // ─── Fallback images for seeded products (backend stores no image URL) ──────
 const LOCAL_IMAGES: Record<string, string> = {
@@ -94,6 +94,7 @@ interface RawProducto {
   descripcion: string;
   detalle: string;
   compatibilidad: { auto: string; anios: string }[];
+  compatibilidades_auto?: ProductoCompatibilidadAuto[];
   imagen_url: string;
   stock: number;
   activo: boolean;
@@ -148,6 +149,7 @@ function toProducto(r: RawProducto): ProductoAdmin {
     descripcion: r.descripcion,
     detalle: r.detalle,
     compatibilidad: r.compatibilidad,
+    compatibilidades_auto: r.compatibilidades_auto ?? [],
     imagen: resolveImage(r.codigo, r.imagen_url),
     stock: r.stock,
     activo: r.activo,
@@ -396,6 +398,27 @@ export const api = {
   subfamilias: {
     list: () => request("/api/subfamilias/")
   },
+
+  vehiculos: {
+  marcas: () =>
+    request<{ id: number; nombre: string; logo?: string; activa?: boolean }[]>(
+      "/api/vehiculos/marcas"
+    ),
+
+  modelos: (marcaId?: number) => {
+    const q = marcaId ? `?marca_id=${marcaId}` : "";
+    return request<
+      { id: number; marca_id: number; nombre: string; activo: boolean; marca_nombre?: string }[]
+    >(`/api/vehiculos/modelos${q}`);
+  },
+
+  motores: (modeloId?: number) => {
+    const q = modeloId ? `?modelo_id=${modeloId}` : "";
+    return request<
+      { id: number; modelo_id: number; nombre: string; activo: boolean; modelo_nombre?: string }[]
+    >(`/api/vehiculos/motores${q}`);
+  },
+},
 
   usuarios: {
     list: () => request<UsuarioOut[]>("/api/usuarios"),

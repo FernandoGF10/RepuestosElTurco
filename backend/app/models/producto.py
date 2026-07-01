@@ -28,3 +28,9 @@ class Producto(Base):
 
     familia = relationship("Familia")
     subfamilia = relationship("Subfamilia")
+
+    compatibilidades_rel = relationship(
+        "ProductoCompatibilidad",
+        back_populates="producto",
+        cascade="all, delete-orphan",
+    )

@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from app.core.config import get_settings
 from app.core.database import engine, Base
 from app.core.security import hash_password
-from app.routers import auth, productos, pedidos, clientes, reportes, config, usuarios, marcas, familias, subfamilias
+from app.routers import auth, productos, pedidos, clientes, reportes, config, usuarios, marcas, familias, subfamilias, vehiculos
 
 settings = get_settings()
 
@@ -124,6 +124,7 @@ app.include_router(usuarios.router)
 app.include_router(marcas.router)
 app.include_router(familias.router)
 app.include_router(subfamilias.router)
+app.include_router(vehiculos.router)
 
 
 @app.get("/", tags=["health"])

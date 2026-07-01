@@ -7,7 +7,7 @@ const SLIDES = [
     "/img/horario.png",
 ];
 
-const AUTOPLAY_MS = 5000;
+const AUTOPLAY_MS = 10000;
 
 const HeroBanner = () => {
     const [current, setCurrent] = useState(0);
