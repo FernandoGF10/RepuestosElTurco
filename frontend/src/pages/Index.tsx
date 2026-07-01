@@ -28,6 +28,29 @@ interface Subfamilia {
   familia_id: number;
 }
 
+interface MarcaVehiculo {
+  id: number;
+  nombre: string;
+  logo?: string;
+  activa?: boolean;
+}
+
+interface ModeloAuto {
+  id: number;
+  marca_id: number;
+  nombre: string;
+  activo: boolean;
+  marca_nombre?: string;
+}
+
+interface MotorAuto {
+  id: number;
+  modelo_id: number;
+  nombre: string;
+  activo: boolean;
+  modelo_nombre?: string;
+}
+
 const Index = () => {
   const { addItem, setCartOpen, count } = useCart();
 
@@ -35,16 +58,21 @@ const Index = () => {
   const [subfamilias, setSubfamilias] = useState<Subfamilia[]>([]);
   const [productos, setProductos] = useState<ProductoAdmin[]>([]);
 
+  const [marcasVehiculo, setMarcasVehiculo] = useState<MarcaVehiculo[]>([]);
+  const [modelosVehiculo, setModelosVehiculo] = useState<ModeloAuto[]>([]);
+  const [motoresVehiculo, setMotoresVehiculo] = useState<MotorAuto[]>([]);
+
+  const [marcaVehiculoActiva, setMarcaVehiculoActiva] = useState<number | null>(null);
+  const [modeloVehiculoActivo, setModeloVehiculoActivo] = useState<number | null>(null);
+  const [motorVehiculoActivo, setMotorVehiculoActivo] = useState<number | null>(null);
+  const [anioVehiculoActivo, setAnioVehiculoActivo] = useState("");
+
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [familiaActiva, setFamiliaActiva] =
-    useState<number | null>(null);
+  const [familiaActiva, setFamiliaActiva] = useState<number | null>(null);
+  const [subfamiliaActiva, setSubfamiliaActiva] = useState<number | null>(null);
 
-  const [subfamiliaActiva, setSubfamiliaActiva] =
-    useState<number | null>(null);
-
-  const [selectedProducto, setSelectedProducto] =
-    useState<ProductoAdmin | null>(null);
+  const [selectedProducto, setSelectedProducto] = useState<ProductoAdmin | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -54,8 +82,14 @@ const Index = () => {
 
   const openSubmenu = (familiaId: number, target: HTMLElement) => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
+
     const rect = target.getBoundingClientRect();
-    setMenuPos({ top: rect.bottom + 8, left: rect.left + rect.width / 2 });
+
+    setMenuPos({
+      top: rect.bottom + 8,
+      left: rect.left + rect.width / 2,
+    });
+
     setOpenFamiliaId(familiaId);
   };
 
@@ -71,11 +105,13 @@ const Index = () => {
     Promise.all([
       api.familias.list(),
       api.subfamilias.list(),
+      api.vehiculos.marcas(),
     ])
-        .then(([familiasData, subfamiliasData]: [Familia[], Subfamilia[]]) => {
-          setFamilias(familiasData);
-          setSubfamilias(subfamiliasData);
-        })
+      .then(([familiasData, subfamiliasData, marcasData]) => {
+        setFamilias(familiasData as Familia[]);
+        setSubfamilias(subfamiliasData as Subfamilia[]);
+        setMarcasVehiculo(marcasData as MarcaVehiculo[]);
+      })
       .catch(() => {
         toast.error("No se pudieron cargar las categorías.");
       });
@@ -90,7 +126,45 @@ const Index = () => {
       });
   }, []);
 
+  useEffect(() => {
+    if (!marcaVehiculoActiva) {
+      setModelosVehiculo([]);
+      setModeloVehiculoActivo(null);
+      setMotorVehiculoActivo(null);
+      setMotoresVehiculo([]);
+      return;
+    }
+
+    api.vehiculos
+      .modelos(marcaVehiculoActiva)
+      .then((data) => {
+        setModelosVehiculo(data as ModeloAuto[]);
+      })
+      .catch(() => {
+        toast.error("No se pudieron cargar los modelos.");
+      });
+  }, [marcaVehiculoActiva]);
+
+  useEffect(() => {
+    if (!modeloVehiculoActivo) {
+      setMotoresVehiculo([]);
+      setMotorVehiculoActivo(null);
+      return;
+    }
+
+    api.vehiculos
+      .motores(modeloVehiculoActivo)
+      .then((data) => {
+        setMotoresVehiculo(data as MotorAuto[]);
+      })
+      .catch(() => {
+        toast.error("No se pudieron cargar los motores.");
+      });
+  }, [modeloVehiculoActivo]);
+
   const filteredProductos = useMemo(() => {
+    const anioFiltro = anioVehiculoActivo ? Number(anioVehiculoActivo) : null;
+
     return productos.filter((r) => {
       const matchFamilia =
         familiaActiva === null ||
@@ -107,14 +181,43 @@ const Index = () => {
         r.nombre.toLowerCase().includes(term) ||
         r.codigo.toLowerCase().includes(term) ||
         r.marca.toLowerCase().includes(term) ||
-        r.compatibilidad.some((c) =>
+        (r.compatibilidad ?? []).some((c) =>
           c.auto.toLowerCase().includes(term)
         );
+
+      const tieneFiltroVehiculo =
+        marcaVehiculoActiva !== null ||
+        modeloVehiculoActivo !== null ||
+        motorVehiculoActivo !== null ||
+        anioFiltro !== null;
+
+      const matchVehiculo =
+        !tieneFiltroVehiculo ||
+        (r.compatibilidades_auto ?? []).some((c) => {
+          const matchMarca =
+            marcaVehiculoActiva === null ||
+            c.marca_id === marcaVehiculoActiva;
+
+          const matchModelo =
+            modeloVehiculoActivo === null ||
+            c.modelo_id === modeloVehiculoActivo;
+
+          const matchMotor =
+            motorVehiculoActivo === null ||
+            c.motor_id === motorVehiculoActivo;
+
+          const matchAnio =
+            anioFiltro === null ||
+            (c.anio_desde <= anioFiltro && c.anio_hasta >= anioFiltro);
+
+          return matchMarca && matchModelo && matchMotor && matchAnio;
+        });
 
       return (
         matchFamilia &&
         matchSubfamilia &&
-        matchSearch
+        matchSearch &&
+        matchVehiculo
       );
     });
   }, [
@@ -122,10 +225,23 @@ const Index = () => {
     familiaActiva,
     subfamiliaActiva,
     searchTerm,
+    marcaVehiculoActiva,
+    modeloVehiculoActivo,
+    motorVehiculoActivo,
+    anioVehiculoActivo,
   ]);
 
   const scrollByAmount = (amount: number) => {
     scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
+  const limpiarFiltroVehiculo = () => {
+    setMarcaVehiculoActiva(null);
+    setModeloVehiculoActivo(null);
+    setMotorVehiculoActivo(null);
+    setAnioVehiculoActivo("");
+    setModelosVehiculo([]);
+    setMotoresVehiculo([]);
   };
 
   return (
@@ -142,7 +258,6 @@ const Index = () => {
 
       <section id="repuestos" className="py-12 flex-1">
         <div className="container">
-
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
             <div>
               <span className="text-xs text-muted-foreground font-heading font-bold uppercase tracking-[0.2em]">
@@ -154,18 +269,91 @@ const Index = () => {
               </h2>
             </div>
 
-            <div className="inline-flex items-center gap-2 bg-secondary/90 text-secondary-foreground px-3 py-1 rounded-full w-fit">
-                        <span className="w-2 h-2 rounded-full bg-secondary-foreground animate-pulse" />
+            <div className="w-full md:w-auto flex flex-col items-start md:items-end gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full md:w-auto">
+                <select
+                  value={marcaVehiculoActiva ?? ""}
+                  onChange={(e) => {
+                    const id = Number(e.target.value);
+                    setMarcaVehiculoActiva(id || null);
+                    setModeloVehiculoActivo(null);
+                    setMotorVehiculoActivo(null);
+                  }}
+                  className="h-9 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground outline-none hover:border-primary/40"
+                >
+                  <option value="">Marca vehículo</option>
 
-                        <p className="text-sm text-muted-foreground">
-              Mostrando{" "}
-              <strong className="text-foreground">
-                {filteredProductos.length}
-              </strong>{" "}
-              de {productos.length} repuestos
-            </p>
-                    </div>
+                  {marcasVehiculo.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.nombre}
+                    </option>
+                  ))}
+                </select>
 
+                <select
+                  value={modeloVehiculoActivo ?? ""}
+                  disabled={!marcaVehiculoActiva}
+                  onChange={(e) => {
+                    const id = Number(e.target.value);
+                    setModeloVehiculoActivo(id || null);
+                    setMotorVehiculoActivo(null);
+                  }}
+                  className="h-9 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground outline-none hover:border-primary/40 disabled:opacity-50"
+                >
+                  <option value="">Modelo</option>
+
+                  {modelosVehiculo.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.nombre}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={motorVehiculoActivo ?? ""}
+                  disabled={!modeloVehiculoActivo}
+                  onChange={(e) => {
+                    const id = Number(e.target.value);
+                    setMotorVehiculoActivo(id || null);
+                  }}
+                  className="h-9 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground outline-none hover:border-primary/40 disabled:opacity-50"
+                >
+                  <option value="">Motor</option>
+
+                  {motoresVehiculo.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.nombre}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  value={anioVehiculoActivo}
+                  onChange={(e) => setAnioVehiculoActivo(e.target.value)}
+                  placeholder="Año"
+                  className="h-9 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground outline-none hover:border-primary/40"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-start md:justify-end gap-2">
+
+                {(marcaVehiculoActiva ||
+                  modeloVehiculoActivo ||
+                  motorVehiculoActivo ||
+                  anioVehiculoActivo) && (
+                  <button
+                    type="button"
+                    onClick={limpiarFiltroVehiculo}
+                    className="text-xs font-heading font-bold text-primary hover:underline"
+                  >
+                    Limpiar vehículo
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Carrusel de familias con imagen */}
@@ -222,6 +410,7 @@ const Index = () => {
                 const subs = subfamilias.filter(
                   (s) => s.familia_id === familia.id
                 );
+
                 const isActive = familiaActiva === familia.id;
 
                 return (
@@ -294,6 +483,7 @@ const Index = () => {
 
             {openFamiliaId !== null && menuPos && (() => {
               const familiaAbierta = familias.find((f) => f.id === openFamiliaId);
+
               const subsAbiertas = subfamilias.filter(
                 (s) => s.familia_id === openFamiliaId
               );
@@ -356,7 +546,7 @@ const Index = () => {
               </p>
 
               <p className="text-sm text-muted-foreground">
-                Intenta con otro término de búsqueda o categoría.
+                Intenta con otro término de búsqueda, categoría o vehículo.
               </p>
 
               <button
@@ -364,6 +554,7 @@ const Index = () => {
                   setSearchTerm("");
                   setFamiliaActiva(null);
                   setSubfamiliaActiva(null);
+                  limpiarFiltroVehiculo();
                 }}
                 className="text-sm text-primary font-heading font-bold hover:underline"
               >

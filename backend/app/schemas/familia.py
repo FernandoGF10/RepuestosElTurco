@@ -7,8 +7,15 @@ class FamiliaCreate(BaseModel):
     imagen: Optional[str] = None
 
 
-class FamiliaResponse(FamiliaCreate):
+class FamiliaUpdate(BaseModel):
+    nombre: Optional[str] = None
+    imagen: Optional[str] = None
+
+
+class FamiliaResponse(BaseModel):
     id: int
+    nombre: str
+    imagen: Optional[str] = None
 
     class Config:
         from_attributes = True

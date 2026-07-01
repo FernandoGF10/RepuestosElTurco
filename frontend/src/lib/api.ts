@@ -392,12 +392,48 @@ export const api = {
   },
 
   familias: {
-    list: () => request("/api/familias/")
-  },
+  list: () =>
+    request<{ id: number; nombre: string; imagen?: string }[]>("/api/familias/"),
 
-  subfamilias: {
-    list: () => request("/api/subfamilias/")
-  },
+  create: (data: { nombre: string; imagen?: string }) =>
+    request<{ id: number; nombre: string; imagen?: string }>("/api/familias/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: number, data: { nombre?: string; imagen?: string }) =>
+    request<{ id: number; nombre: string; imagen?: string }>(`/api/familias/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: number) =>
+    request<void>(`/api/familias/${id}`, {
+      method: "DELETE",
+    }),
+},
+
+subfamilias: {
+  list: () =>
+    request<{ id: number; nombre: string; familia_id: number }[]>("/api/subfamilias/"),
+
+  create: (data: { nombre: string; familia_id: number }) =>
+    request<{ id: number; nombre: string; familia_id: number }>("/api/subfamilias/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: number, data: { nombre?: string; familia_id?: number }) =>
+    request<{ id: number; nombre: string; familia_id: number }>(`/api/subfamilias/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: number) =>
+    request<void>(`/api/subfamilias/${id}`, {
+      method: "DELETE",
+    }),
+},
 
   vehiculos: {
   marcas: () =>

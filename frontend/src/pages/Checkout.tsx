@@ -3,7 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, ShoppingBag, MapPin, Loader2, Tag, Phone, User, Mail, FileText, Store } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { api } from "@/lib/api";
-import logo from "../../public/img/logo-el-turco.png";
+
+const logo = "/img/logo-el-turco.png";
 
 const formatCLP = (n: number) =>
   n.toLocaleString("es-CL", { style: "currency", currency: "CLP", minimumFractionDigits: 0 });

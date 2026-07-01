@@ -1,7 +1,8 @@
 import { Phone, Clock, Search, Menu, X, ShoppingCart, User } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import logo from "../../public/img/logo-el-turco.png";
+
+const logo = "/img/logo-el-turco.png";
 
 interface SiteHeaderProps {
   searchTerm: string;

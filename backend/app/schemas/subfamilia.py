@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class SubfamiliaCreate(BaseModel):
@@ -6,8 +7,15 @@ class SubfamiliaCreate(BaseModel):
     familia_id: int
 
 
-class SubfamiliaResponse(SubfamiliaCreate):
+class SubfamiliaUpdate(BaseModel):
+    nombre: Optional[str] = None
+    familia_id: Optional[int] = None
+
+
+class SubfamiliaResponse(BaseModel):
     id: int
+    nombre: str
+    familia_id: int
 
     class Config:
         from_attributes = True

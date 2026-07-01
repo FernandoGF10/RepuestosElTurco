@@ -11,25 +11,31 @@ import {
   X,
   ExternalLink,
   UserCog,
+  FolderTree,
 } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
-import logo from "../../public/img/logo-el-turco.png";
+
+const logo = "/img/logo-el-turco.png";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+
   const username = api.token.getUsername();
   const rol = api.token.getRol();
 
   const navItems = [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
     { to: "/admin/productos", icon: Package, label: "Productos" },
+    { to: "/admin/familias", icon: FolderTree, label: "Familias" },
     { to: "/admin/pedidos", icon: ShoppingBag, label: "Pedidos" },
     { to: "/admin/clientes", icon: Users, label: "Clientes" },
     { to: "/admin/reportes", icon: BarChart3, label: "Reportes" },
     { to: "/admin/configuracion", icon: Settings, label: "Configuración" },
-    ...(rol === "admin" ? [{ to: "/admin/usuarios", icon: UserCog, label: "Usuarios" }] : []),
+    ...(rol === "admin"
+      ? [{ to: "/admin/usuarios", icon: UserCog, label: "Usuarios" }]
+      : []),
   ];
 
   const handleLogout = () => {
@@ -47,12 +53,25 @@ const AdminLayout = () => {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 h-16 border-b border-white/10">
-          <img src={logo} alt="" className="h-9 w-9 rounded-full ring-2 ring-secondary/40" />
+          <img
+            src={logo}
+            alt=""
+            className="h-9 w-9 rounded-full ring-2 ring-secondary/40"
+          />
+
           <div className="leading-none">
-            <p className="font-heading font-black text-[10px] tracking-widest text-white/40 uppercase">Panel Admin</p>
-            <p className="font-heading font-black text-secondary text-base leading-tight">El Turco</p>
+            <p className="font-heading font-black text-[10px] tracking-widest text-white/40 uppercase">
+              Panel Admin
+            </p>
+            <p className="font-heading font-black text-secondary text-base leading-tight">
+              El Turco
+            </p>
           </div>
-          <button className="ml-auto md:hidden p-1 text-white/60 hover:text-white" onClick={() => setOpen(false)}>
+
+          <button
+            className="ml-auto md:hidden p-1 text-white/60 hover:text-white"
+            onClick={() => setOpen(false)}
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -75,7 +94,11 @@ const AdminLayout = () => {
             >
               {({ isActive }) => (
                 <>
-                  <item.icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-white/50"}`} />
+                  <item.icon
+                    className={`w-4 h-4 shrink-0 ${
+                      isActive ? "text-white" : "text-white/50"
+                    }`}
+                  />
                   {item.label}
                 </>
               )}
@@ -93,6 +116,7 @@ const AdminLayout = () => {
             <ExternalLink className="w-4 h-4 shrink-0" />
             Ver sitio público
           </Link>
+
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-heading font-bold text-white/50 hover:bg-destructive/20 hover:text-destructive transition-all"
@@ -104,27 +128,47 @@ const AdminLayout = () => {
       </aside>
 
       {open && (
-        <div className="md:hidden fixed inset-0 bg-black/60 z-30" onClick={() => setOpen(false)} />
+        <div
+          className="md:hidden fixed inset-0 bg-black/60 z-30"
+          onClick={() => setOpen(false)}
+        />
       )}
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header className="bg-card border-b border-border h-16 flex items-center px-4 md:px-6 gap-4 sticky top-0 z-20">
-          <button className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => setOpen(true)}>
+          <button
+            className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground"
+            onClick={() => setOpen(true)}
+          >
             <Menu className="w-5 h-5" />
           </button>
 
           <div className="hidden md:flex items-center gap-2">
             <span className="w-1 h-5 rounded-full bg-secondary inline-block" />
-            <span className="font-heading font-black text-sm text-foreground">Panel de administración</span>
+            <span className="font-heading font-black text-sm text-foreground">
+              Panel de administración
+            </span>
           </div>
 
           <div className="ml-auto flex items-center gap-3">
             <span className="hidden sm:inline text-sm text-muted-foreground">
-              Hola, <strong className="text-foreground font-heading">{username}</strong>
-              {" "}<span className={`text-[10px] font-heading font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${rol === "admin" ? "bg-primary/10 text-primary" : "bg-secondary/20 text-secondary-foreground"}`}>{rol}</span>
+              Hola,{" "}
+              <strong className="text-foreground font-heading">
+                {username}
+              </strong>{" "}
+              <span
+                className={`text-[10px] font-heading font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${
+                  rol === "admin"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-secondary/20 text-secondary-foreground"
+                }`}
+              >
+                {rol}
+              </span>
             </span>
+
             <div className="w-8 h-8 rounded-full bg-primary text-white font-heading font-black flex items-center justify-center text-xs shadow-sm">
               {username.substring(0, 1).toUpperCase()}
             </div>

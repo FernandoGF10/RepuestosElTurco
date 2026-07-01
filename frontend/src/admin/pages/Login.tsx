@@ -4,7 +4,8 @@ import { Eye, EyeOff, Lock, ShieldCheck, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
-import logo from "../../../public/img/logo-el-turco.png";
+
+const logo = "/img/logo-el-turco.png";
 
 const Login = () => {
   const navigate = useNavigate();

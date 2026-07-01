@@ -4,16 +4,19 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/lib/cartContext";
+
 import Index from "./pages/Index.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import PedidoConfirmado from "./pages/PedidoConfirmado.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Nosotros from "./pages/Nosotros.tsx";
+
 import AdminLayout from "@/admin/AdminLayout";
 import RequireAuth from "@/admin/RequireAuth";
 import Login from "@/admin/pages/Login";
 import Dashboard from "@/admin/pages/Dashboard";
 import Productos from "@/admin/pages/Productos";
+import Familias from "@/admin/pages/Familias";
 import Pedidos from "@/admin/pages/Pedidos";
 import Clientes from "@/admin/pages/Clientes";
 import Reportes from "@/admin/pages/Reportes";
@@ -27,6 +30,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+
       <BrowserRouter>
         <CartProvider>
           <Routes>
@@ -34,7 +38,9 @@ const App = () => (
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/pedido/:numero" element={<PedidoConfirmado />} />
             <Route path="/nosotros" element={<Nosotros />} />
+
             <Route path="/admin/login" element={<Login />} />
+
             <Route
               path="/admin"
               element={
@@ -45,12 +51,14 @@ const App = () => (
             >
               <Route index element={<Dashboard />} />
               <Route path="productos" element={<Productos />} />
+              <Route path="familias" element={<Familias />} />
               <Route path="pedidos" element={<Pedidos />} />
               <Route path="clientes" element={<Clientes />} />
               <Route path="reportes" element={<Reportes />} />
               <Route path="configuracion" element={<Configuracion />} />
               <Route path="usuarios" element={<Usuarios />} />
             </Route>
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

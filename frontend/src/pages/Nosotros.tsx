@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Store, Users, MapPin } from "lucide-react";
-import logo from "../../public/img/logo-el-turco.png";
 import SiteFooter from "@/components/SiteFooter";
+
+const logo = "/img/logo-el-turco.png";
 
 const Nosotros = () => {
   return (
