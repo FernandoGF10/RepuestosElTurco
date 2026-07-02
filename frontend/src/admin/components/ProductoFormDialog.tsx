@@ -189,6 +189,8 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
 
   const [compatDraft, setCompatDraft] = useState<CompatDraft>(emptyCompatDraft);
   const [compatibilidadesAuto, setCompatibilidadesAuto] = useState<ProductoCompatibilidadAuto[]>([]);
+  const [compatibilidadesManual, setCompatibilidadesManual] = useState<FormData["compatibilidad"]>([]);
+  const [teniaCompatibilidadesAuto, setTeniaCompatibilidadesAuto] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -230,16 +232,45 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
       setFamiliaSeleccionada(producto.familia_id ?? null);
       setSubfamiliaSeleccionada(producto.subfamilia_id ?? null);
       setCompatibilidadesAuto(producto.compatibilidades_auto ?? []);
+      setCompatibilidadesManual(producto.compatibilidad ?? []);
+      setTeniaCompatibilidadesAuto(Boolean(producto.compatibilidades_auto?.length));
     } else {
       setForm(empty);
       setFamiliaSeleccionada(null);
       setSubfamiliaSeleccionada(null);
       setCompatibilidadesAuto([]);
+      setCompatibilidadesManual([]);
+      setTeniaCompatibilidadesAuto(false);
     }
 
     setCompatDraft(emptyCompatDraft);
     setErrors({});
   }, [open, producto]);
+
+  useEffect(() => {
+    if (!open || !producto) return;
+
+    if (!familiaSeleccionada && producto.familia_nombre && familias.length > 0) {
+      const familia = familias.find((f) => f.nombre === producto.familia_nombre);
+      if (familia) setFamiliaSeleccionada(familia.id);
+    }
+
+    if (!subfamiliaSeleccionada && producto.subfamilia_nombre && subfamilias.length > 0) {
+      const subfamilia = subfamilias.find(
+        (s) =>
+          s.nombre === producto.subfamilia_nombre &&
+          (!familiaSeleccionada || s.familia_id === familiaSeleccionada)
+      );
+      if (subfamilia) setSubfamiliaSeleccionada(subfamilia.id);
+    }
+  }, [
+    open,
+    producto,
+    familias,
+    subfamilias,
+    familiaSeleccionada,
+    subfamiliaSeleccionada,
+  ]);
 
   useEffect(() => {
     if (!open || !compatDraft.marca_id) {
@@ -392,6 +423,22 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
     setCompatibilidadesAuto((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const actualizarCompatibilidadManual = (
+    index: number,
+    campo: "auto" | "anios",
+    value: string
+  ) => {
+    setCompatibilidadesManual((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, [campo]: value } : item
+      )
+    );
+  };
+
+  const eliminarCompatibilidadManual = (index: number) => {
+    setCompatibilidadesManual((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const compatibilidadTexto = compatibilidadesAuto.map((c) => ({
     auto: `${c.marca_nombre ?? nombreMarcaVehiculo(c.marca_id)} ${
       c.modelo_nombre ?? nombreModeloVehiculo(c.modelo_id, c.modelo_nombre)
@@ -420,8 +467,14 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
         familia_id: familiaSeleccionada ?? undefined,
         subfamilia_id: subfamiliaSeleccionada ?? undefined,
         imagen: form.imagen || "/placeholder.svg",
-        compatibilidad: compatibilidadTexto.length > 0 ? compatibilidadTexto : form.compatibilidad,
-        compatibilidades_auto: compatibilidadesPayload,
+        compatibilidad:
+          compatibilidadTexto.length > 0
+            ? compatibilidadTexto
+            : compatibilidadesManual.filter((c) => c.auto.trim() || c.anios.trim()),
+        compatibilidades_auto:
+          compatibilidadesPayload.length > 0 || teniaCompatibilidadesAuto
+            ? compatibilidadesPayload
+            : undefined,
       };
 
       if (producto) {
@@ -800,6 +853,48 @@ const ProductoFormDialog = ({ open, onOpenChange, producto }: Props) => {
                           variant="ghost"
                           onClick={() => eliminarCompatibilidad(index)}
                           className="h-8 gap-1 rounded-md text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Eliminar
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {compatibilidadesAuto.length === 0 && compatibilidadesManual.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Compatibilidades actuales:
+                    </p>
+
+                    {compatibilidadesManual.map((c, index) => (
+                      <div
+                        key={`${c.auto}-${c.anios}-${index}`}
+                        className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-background p-3 md:grid-cols-[1fr_160px_auto]"
+                      >
+                        <Input
+                          value={c.auto}
+                          onChange={(e) =>
+                            actualizarCompatibilidadManual(index, "auto", e.target.value)
+                          }
+                          placeholder="Vehículo compatible"
+                          className={inputCls}
+                        />
+                        <Input
+                          value={c.anios}
+                          onChange={(e) =>
+                            actualizarCompatibilidadManual(index, "anios", e.target.value)
+                          }
+                          placeholder="Años"
+                          className={inputCls}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => eliminarCompatibilidadManual(index)}
+                          className="h-11 gap-1 rounded-md text-muted-foreground hover:text-destructive"
                         >
                           <X className="h-3.5 w-3.5" />
                           Eliminar

@@ -22,6 +22,12 @@ import {
 
 const PRODUCTOS_POR_PAGINA = 12;
 
+const normalizeText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 import { api } from "@/lib/api";
 import { useCart } from "@/lib/cartContext";
 
@@ -177,6 +183,18 @@ const Index = () => {
 
   const filteredProductos = useMemo(() => {
     const anioFiltro = anioVehiculoActivo ? Number(anioVehiculoActivo) : null;
+    const marcaVehiculoSeleccionada = marcaVehiculoActiva
+      ? marcasVehiculo.find((m) => m.id === marcaVehiculoActiva)
+      : null;
+    const marcaVehiculoTexto = marcaVehiculoSeleccionada
+      ? normalizeText(marcaVehiculoSeleccionada.nombre)
+      : "";
+    const modeloVehiculoSeleccionado = modeloVehiculoActivo
+      ? modelosVehiculo.find((m) => m.id === modeloVehiculoActivo)
+      : null;
+    const modeloVehiculoTexto = modeloVehiculoSeleccionado
+      ? normalizeText(modeloVehiculoSeleccionado.nombre)
+      : "";
 
     return productos.filter((r) => {
       const matchFamilia =
@@ -187,15 +205,15 @@ const Index = () => {
         subfamiliaActiva === null ||
         r.subfamilia_id === subfamiliaActiva;
 
-      const term = searchTerm.toLowerCase();
+      const term = normalizeText(searchTerm);
 
       const matchSearch =
         !term ||
-        r.nombre.toLowerCase().includes(term) ||
-        r.codigo.toLowerCase().includes(term) ||
-        r.marca.toLowerCase().includes(term) ||
+        normalizeText(r.nombre).includes(term) ||
+        normalizeText(r.codigo).includes(term) ||
+        normalizeText(r.marca).includes(term) ||
         (r.compatibilidad ?? []).some((c) =>
-          c.auto.toLowerCase().includes(term)
+          normalizeText(c.auto).includes(term)
         );
 
       const tieneFiltroVehiculo =
@@ -224,7 +242,21 @@ const Index = () => {
             (c.anio_desde <= anioFiltro && c.anio_hasta >= anioFiltro);
 
           return matchMarca && matchModelo && matchMotor && matchAnio;
-        });
+        }) ||
+        (
+          marcaVehiculoActiva !== null &&
+          motorVehiculoActivo === null &&
+          anioFiltro === null &&
+          (r.compatibilidad ?? []).some((c) => {
+            const auto = normalizeText(c.auto);
+            const matchMarcaTexto = auto.includes(marcaVehiculoTexto);
+            const matchModeloTexto =
+              modeloVehiculoActivo === null ||
+              auto.includes(modeloVehiculoTexto);
+
+            return matchMarcaTexto && matchModeloTexto;
+          })
+        );
 
       return (
         matchFamilia &&
@@ -239,7 +271,9 @@ const Index = () => {
     subfamiliaActiva,
     searchTerm,
     marcaVehiculoActiva,
+    marcasVehiculo,
     modeloVehiculoActivo,
+    modelosVehiculo,
     motorVehiculoActivo,
     anioVehiculoActivo,
   ]);
