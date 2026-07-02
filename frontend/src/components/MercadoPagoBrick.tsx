@@ -79,10 +79,11 @@ const MercadoPagoBrick = ({ pedidoId, amount, payerEmail, onAprobado, onRechazad
               identification: formData.payer?.identification,
             })
             .then((res) => {
-              resolve();
               if (res.estado_pago === "aprobado") {
+                resolve();
                 onAprobado();
               } else {
+                reject();
                 onRechazado(res.status_detail || res.status);
               }
             })

@@ -26,6 +26,78 @@ def _seed_admin():
             print(f"✅ Usuario admin creado: {settings.ADMIN_USER}")
 
 
+def _seed_vehiculos():
+    """Siembra modelos y motores para las marcas de vehículo existentes, si aún no tienen."""
+    from sqlalchemy.orm import Session
+    from app.models.marca import Marca
+    from app.models.modelo_auto import ModeloAuto
+    from app.models.motor_auto import MotorAuto
+
+    seed = {
+        "Peugeot": {
+            "206": ["1.4 Nafta", "1.6 Nafta"],
+            "207": ["1.4 Nafta", "1.6 Nafta"],
+            "208": ["1.6 Nafta", "1.6 THP"],
+            "308": ["1.6 Nafta", "2.0 HDi"],
+            "408": ["1.6 THP", "2.0 HDi"],
+        },
+        "Citroën": {
+            "C3": ["1.4 Nafta", "1.6 Nafta"],
+            "C3 Aircross": ["1.6 Nafta", "1.6 THP"],
+            "C4": ["1.6 Nafta", "2.0 HDi"],
+            "Berlingo": ["1.6 Nafta", "1.6 HDi"],
+        },
+        "Renault": {
+            "Clio": ["1.2 Nafta", "1.6 Nafta"],
+            "Kangoo": ["1.6 Nafta", "1.5 dCi"],
+            "Sandero": ["1.6 Nafta", "0.9 Turbo"],
+            "Logan": ["1.6 Nafta", "1.5 dCi"],
+            "Symbol": ["1.6 Nafta"],
+            "Duster": ["1.6 Nafta", "2.0 Nafta", "1.5 dCi"],
+            "Fluence": ["1.6 Nafta", "2.0 Nafta"],
+            "Megane III": ["1.6 Nafta", "2.0 Nafta"],
+        },
+        "Chevrolet": {
+            "Corsa": ["1.4 Nafta", "1.6 Nafta"],
+            "Agile": ["1.4 Nafta"],
+            "Prisma": ["1.4 Nafta"],
+            "Cruze": ["1.4 Turbo", "1.8 Nafta"],
+            "Tracker": ["1.4 Turbo", "1.8 Nafta"],
+            "Onix": ["1.0 Turbo", "1.4 Nafta"],
+        },
+        "DFM": {
+            "Minivan": ["1.5 Nafta"],
+        },
+        "Opel": {
+            "Corsa": ["1.4 Nafta", "1.6 Nafta"],
+            "Astra": ["1.6 Nafta", "2.0 Nafta"],
+        },
+    }
+
+    with Session(engine) as db:
+        if db.query(ModeloAuto).count() > 0:
+            return
+
+        creados = 0
+        for marca_nombre, modelos in seed.items():
+            marca = db.query(Marca).filter(Marca.nombre == marca_nombre).first()
+            if not marca:
+                continue
+
+            for modelo_nombre, motores in modelos.items():
+                modelo = ModeloAuto(marca_id=marca.id, nombre=modelo_nombre)
+                db.add(modelo)
+                db.flush()
+
+                for motor_nombre in motores:
+                    db.add(MotorAuto(modelo_id=modelo.id, nombre=motor_nombre))
+
+                creados += 1
+
+        db.commit()
+        print(f"✅ {creados} modelos de vehículo sembrados (con sus motores)")
+
+
 def _seed_productos():
     """Siembra los 8 productos del catálogo inicial si la tabla está vacía."""
     from sqlalchemy.orm import Session
@@ -96,6 +168,7 @@ async def lifespan(app: FastAPI):
     import app.models  # noqa: importa todos los modelos para que Base los registre
     Base.metadata.create_all(bind=engine)
     _seed_admin()
+    _seed_vehiculos()
     _seed_productos()
     yield
 

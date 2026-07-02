@@ -10,6 +10,17 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import CartDrawer from "@/components/CartDrawer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SiteFooter from "@/components/SiteFooter";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+const PRODUCTOS_POR_PAGINA = 12;
 
 import { api } from "@/lib/api";
 import { useCart } from "@/lib/cartContext";
@@ -73,6 +84,8 @@ const Index = () => {
   const [subfamiliaActiva, setSubfamiliaActiva] = useState<number | null>(null);
 
   const [selectedProducto, setSelectedProducto] = useState<ProductoAdmin | null>(null);
+
+  const [paginaActual, setPaginaActual] = useState(1);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -230,6 +243,57 @@ const Index = () => {
     motorVehiculoActivo,
     anioVehiculoActivo,
   ]);
+
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [
+    familiaActiva,
+    subfamiliaActiva,
+    searchTerm,
+    marcaVehiculoActiva,
+    modeloVehiculoActivo,
+    motorVehiculoActivo,
+    anioVehiculoActivo,
+  ]);
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(filteredProductos.length / PRODUCTOS_POR_PAGINA)
+  );
+
+  const paginaSegura = Math.min(paginaActual, totalPaginas);
+
+  const productosPagina = useMemo(() => {
+    const inicio = (paginaSegura - 1) * PRODUCTOS_POR_PAGINA;
+    return filteredProductos.slice(inicio, inicio + PRODUCTOS_POR_PAGINA);
+  }, [filteredProductos, paginaSegura]);
+
+  const irAPagina = (pagina: number) => {
+    const destino = Math.min(Math.max(pagina, 1), totalPaginas);
+    setPaginaActual(destino);
+    document
+      .getElementById("repuestos")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const numerosPagina = useMemo(() => {
+    const paginas: (number | "ellipsis")[] = [];
+    const ventana = 1;
+
+    for (let i = 1; i <= totalPaginas; i++) {
+      if (
+        i === 1 ||
+        i === totalPaginas ||
+        (i >= paginaSegura - ventana && i <= paginaSegura + ventana)
+      ) {
+        paginas.push(i);
+      } else if (paginas[paginas.length - 1] !== "ellipsis") {
+        paginas.push("ellipsis");
+      }
+    }
+
+    return paginas;
+  }, [totalPaginas, paginaSegura]);
 
   const hayFiltroVehiculo = Boolean(
     marcaVehiculoActiva ||
@@ -545,16 +609,76 @@ const Index = () => {
           </div>
 
           {filteredProductos.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProductos.map((r) => (
-                <ProductCard
-                  key={r.id}
-                  producto={r}
-                  onVerMas={setSelectedProducto}
-                  onAgregarCarrito={addItem}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {productosPagina.map((r) => (
+                  <ProductCard
+                    key={r.id}
+                    producto={r}
+                    onVerMas={setSelectedProducto}
+                    onAgregarCarrito={addItem}
+                  />
+                ))}
+              </div>
+
+              {totalPaginas > 1 && (
+                <Pagination className="mt-10">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#repuestos"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          irAPagina(paginaSegura - 1);
+                        }}
+                        className={
+                          paginaSegura === 1
+                            ? "pointer-events-none opacity-40"
+                            : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+
+                    {numerosPagina.map((p, idx) =>
+                      p === "ellipsis" ? (
+                        <PaginationItem key={`ellipsis-${idx}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={p}>
+                          <PaginationLink
+                            href="#repuestos"
+                            isActive={p === paginaSegura}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              irAPagina(p);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            {p}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    )}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#repuestos"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          irAPagina(paginaSegura + 1);
+                        }}
+                        className={
+                          paginaSegura === totalPaginas
+                            ? "pointer-events-none opacity-40"
+                            : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </>
           ) : (
             <div className="text-center py-20 space-y-3">
               <div className="w-16 h-16 rounded-full bg-muted mx-auto flex items-center justify-center">
